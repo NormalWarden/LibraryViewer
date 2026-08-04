@@ -34,15 +34,15 @@ int main()
 			<< "3. Search\n"
 			<< "4. Search randomly\n"
 			<< "5. Choose user\n"
-			<< "6. Sign out\n"
-			<< "7. Exit\n"
-			<< "1...7: ";
+			<< "6. Exit\n"
+			<< "1...6: ";
 		std::cin >> choice; // TODO: check for uint (may be entered number 0< or symbol)
 		switch (choice)
 		{
 		case(1):
-			if (Engine::selectUser(user))
-				Engine::printBooksList(Engine::userBooks(user));
+			if (Engine::chooseUser(user))
+				//Engine::printBooksList(Engine::userBooks(user));
+				return 0;
 			else
 			{
 				std::cout << "File \"userData.txt\" can't be open from program directory. Exit...";
@@ -68,13 +68,9 @@ int main()
 			break;
 			// TODO: create option to look book in more details
 		case(5):
-			/*if (!user.empty()) cout << "already logged in as" << user
-			else cout << choose line number with your login; printUsers(users); choosedUser; cin >> choosedUser; chooseUser(choosedUser, &user); cout << "logged in as" << user*/
+			Engine::chooseUser(user);
 			break;
 		case(6):
-			//user = ""; cout << logged out;
-			break;
-		case(7):
 			std::cout << "Do you really want to exit ?\n1.Yes\n2.No\n1...2: "; 
 			std::cin >> choice; 
 			if (choice == 1) return 0;

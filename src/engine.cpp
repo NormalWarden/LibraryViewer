@@ -50,20 +50,12 @@ std::vector<Book> Engine::userBooks(std::string user)
 	return std::vector<Book>();
 }
 
-void Engine::printUsers()
-{
-}
-
-void Engine::chooseUser(std::string choosedUser, std::string& user)
-{
-}
-
 std::vector<Book> Engine::recentlyBooks(std::string user)
 {
 	return std::vector<Book>();
 }
 
-void Engine::printBooksList(std::vector<Book> books)
+void Engine::printBooksList(const json& userData)
 {
 }
 
@@ -76,10 +68,8 @@ Book Engine::randomSearch(std::string author, std::vector<std::string> language,
 	return Book();
 }
 
-bool Engine::selectUser(std::string& userName)
+bool Engine::chooseUser(std::string& userName)
 {
-	if (userName.length() > 0)
-		return USER_SELECTED;
 	std::fstream file(USERDATA_FILENAME);
 	if (!file)
 	{
@@ -105,18 +95,70 @@ bool Engine::selectUser(std::string& userName)
 			file.open(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
 			file << JSONTemplates::fullTemplate;
 			userData = json::parse(JSONTemplates::fullTemplate);
-			file.close();
 		}
 		else
 			return USER_NOT_SELECTED;
 	}
-	if (userData["users"].size() < 1) createUser(userData);
-	//else if (users.size() == 1) printBooksList(myBooks(user))
-	//else if (users.size() > 1)
-	//	if (ensureUserSelected(&user)) printBooksList(myBooks(user))
-	//	if (!user.empty()) myBooks(user)
-	//	else cout << choose line number with your login; printUsers(); choosedUser; cin >> choosedUser; chooseUser(choosedUser, &user); // check user login
-	//		
+
+	std::cout << "Now chosen ";
+	if (userName.length() == 0)
+		std::cout << "guest";
+	else
+		std::cout << userName;
+
+	int choice{};
+	std::cout << "\nDo you want to change account ? \n1.Yes\n2.No\n";
+	std::cin >> choice;
+	if (choice == 1)
+	{
+		if (userData["users"].size() < 1)
+		{
+			createUser(userData);
+			userName = userData["users"][0]["username"];
+			return USER_SELECTED;
+		}
+		else if (userData["users"].size() == 1)
+		{
+			userName = userData["users"][0]["username"];
+			return USER_SELECTED;
+		}
+		else
+		{
+			std::cout << "Choose guest user, your user name or create new one:";
+			std::cout << "\n1. Guest";
+			for (int i{ 0 }; i < userData["users"].size(); ++i)
+				std::cout << "\n" << i + 2 << ". " << userData["users"][i]["username"];
+			std::cout << "\n" << userData["users"].size() + 2 << ". Create new one\n1..." << userData["users"].size() + 2 << ": ";
+			int choice{};
+			while (true)
+			{
+				std::cin >> choice;
+				if (choice == 1)
+				{
+					userName = "";
+					return USER_SELECTED;
+				}
+				else if (choice == userData["users"].size() + 1)
+				{
+					createUser(userData);
+					userName = userData["users"].back()["username"];
+					return USER_SELECTED;
+				}
+				else
+				{
+					try
+					{
+						userName = userData["users"].at(choice - 1)["username"];
+						return USER_SELECTED;
+					}
+					catch (json::out_of_range)
+					{
+						std::cout << "\nInvalid number. Choose another one: ";
+					}
+				}
+			}
+		}
+	}
 	file.close();
 	return USER_SELECTED;
 }

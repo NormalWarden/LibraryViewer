@@ -29,11 +29,9 @@ namespace Engine
 	bool testConnection(); // test request for response 200
 	void createUser(json& userData);
 	std::vector<Book> userBooks(std::string user);
-	void printUsers();
-	void chooseUser(std::string choosedUser, std::string& user);
 	std::vector<Book> recentlyBooks(std::string user);
-	void printBooksList(std::vector<Book> books);
+	void printBooksList(const json& userData);
 	void changeSearchParams(SearchParams& params);
 	Book randomSearch(std::string author, std::vector<std::string> language, size_t year);
-	bool selectUser(std::string& user);
+	bool chooseUser(std::string& user);
 }
