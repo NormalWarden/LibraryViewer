@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Lang
+namespace LangStorage
 {
 	enum class Language
 	{

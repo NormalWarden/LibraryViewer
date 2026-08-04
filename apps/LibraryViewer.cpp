@@ -9,9 +9,10 @@ using json = nlohmann::json;
 
 int main()
 {
-	cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
+	std::cout << "Trying to connect to https://openlibrary.org/...\n";
+	/*cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
 		cpr::Parameters{ {"q", "the+lord+of+the+rings"} });
-	json j = json::parse(r.text);
+	json j = json::parse(r.text);*/
 	//std::cout << j["docs"][0].dump(4);
 
 
@@ -21,6 +22,7 @@ int main()
 		std::cout << "Unable to connect to https://openlibrary.org/";
 		return CONNECTION_FAILURE;
 	}
+	std::cout << "Connection successfull\n";
 
 	size_t choice{};
 	std::string user;
@@ -39,7 +41,13 @@ int main()
 		switch (choice)
 		{
 		case(1):
-			//if (Engine::selectUser(user)) Engine::printBooksList(Engine::myBooks(user));
+			if (Engine::selectUser(user))
+				Engine::printBooksList(Engine::userBooks(user));
+			else
+			{
+				std::cout << "File \"userData.txt\" can't be open from program directory. Exit...";
+				return 1;
+			}
 			break;
 		case(2):
 			//if (Engine::selectUser(user)) Engine::printBooksList(Engine::recentlyBooks(user));
@@ -67,7 +75,9 @@ int main()
 			//user = ""; cout << logged out;
 			break;
 		case(7):
-			//cout << do u really want to exit ? \n1.Yes\n2.No; cin >> choice; if (choice == 1) exit();
+			std::cout << "Do you really want to exit ?\n1.Yes\n2.No\n1...2: "; 
+			std::cin >> choice; 
+			if (choice == 1) return 0;
 			break;
 		}
 	}
