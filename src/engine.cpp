@@ -9,20 +9,12 @@ enum class Engine::Sort
 	Rating
 };
 
-enum class Engine::YearSearch
-{
-	Before,
-	Current,
-	After
-};
-
 struct Engine::SearchParams
 {
-	std::string author = "Any";
+	std::string author;
 	std::vector<std::string> langs;
-	std::string name = "Any";
-	size_t year = NULL;
-	YearSearch yearSearch = YearSearch::After;
+	std::string title;
+	size_t year{};
 	Sort sort = Sort::None;
 	size_t resListSize = 10;
 };
@@ -53,6 +45,52 @@ std::vector<Book> Engine::userBooks(std::string user)
 std::vector<Book> Engine::recentlyBooks(std::string user)
 {
 	return std::vector<Book>();
+}
+
+std::vector<Book> Engine::search(const SearchParams& params)
+{
+	cpr::Parameters searchParams;
+	if (!params.author.empty())
+		searchParams.Add({"author", params.author});
+	if (!params.langs.empty())
+		for (auto lang : params.langs)
+			searchParams.Add({ "language", lang });
+	if (!params.title.empty())
+		searchParams.Add({ "q", params.title });
+	if (params.sort != Sort::None)
+	{
+		switch (params.sort)
+		{
+		case Sort::Editions:
+			searchParams.Add({ "sort", "editions" });
+			break;
+		case Sort::Old:
+			searchParams.Add({ "sort", "old" });
+			break;
+		case Sort::New:
+			searchParams.Add({ "sort", "new" });
+			break;
+		case Sort::Rating:
+			searchParams.Add({ "sort", "rating" });
+			break;
+		}
+	}
+
+	cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"}, searchParams);
+	json j = json::parse(r.text);
+	std::vector<Book> books;
+	for (int el{ 0 }; el < params.resListSize; ++el)
+		books.push_back(Book(j["docs"]["author_name"], 
+			j["docs"]["language"], 
+			j["docs"]["title"], 
+			[](const json& j)->std::string 
+			{ 
+				std::string link{ "https://openlibrary.org/" + j["docs"]["key"] + j["docs"]["title"] };
+				link.replace(begin(link), end(link), " ", "_");
+				return link;  
+			}(j),
+			j["docs"]["first_publish_year"]));
+	return books;
 }
 
 void Engine::printBooksList(const json& userData)
@@ -161,4 +199,10 @@ bool Engine::chooseUser(std::string& userName)
 	}
 	file.close();
 	return USER_SELECTED;
+}
+
+Engine::SearchParams& Engine::getSearchParams(const std::string&)
+{
+	SearchParams userParams;
+	return userParams;
 }

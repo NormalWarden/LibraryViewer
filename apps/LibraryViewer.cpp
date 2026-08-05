@@ -53,6 +53,7 @@ int main()
 			//if (Engine::selectUser(user)) Engine::printBooksList(Engine::recentlyBooks(user));
 			break;
 		case(3):
+			Engine::search(Engine::getSearchParams(user));
 			//while (choice != 2) // 2=No on next lines
 				//break;
 				/*std::cout << "Settings for search: author " << author << " language: " << language ...
