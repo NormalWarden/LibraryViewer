@@ -23,10 +23,11 @@ int main()
 		return CONNECTION_FAILURE;
 	}
 	std::cout << "Connection successfull\n";
-
+	
 	size_t choice{};
 	std::string user;
-
+	Engine::SearchParams sParams;
+	std::vector<Book> books;
 	while (true)
 	{
 		std::cout << "1. Open list of my books\n"
@@ -53,7 +54,8 @@ int main()
 			//if (Engine::selectUser(user)) Engine::printBooksList(Engine::recentlyBooks(user));
 			break;
 		case(3):
-			Engine::search(Engine::getSearchParams(user));
+			Engine::getSearchParams(user, sParams);
+			books = Engine::search(sParams);
 			//while (choice != 2) // 2=No on next lines
 				//break;
 				/*std::cout << "Settings for search: author " << author << " language: " << language ...

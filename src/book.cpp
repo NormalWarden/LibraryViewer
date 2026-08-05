@@ -1,6 +1,6 @@
 #include "book.h"
 
-Book::Book(std::string author, std::vector<std::string> language, std::string title, std::string link, size_t year)
+Book::Book(std::vector<std::string> author, std::vector<std::string> language, std::string title, std::string link, size_t year)
 	: author(author), language(language), title(title), year(year), link(link) {}
 
 Book::Book(const Book& book)

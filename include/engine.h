@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <string_view>
+#include <algorithm>
 
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
@@ -29,10 +30,30 @@ namespace Engine
 	void createUser(json& userData);
 	std::vector<Book> userBooks(std::string user);
 	std::vector<Book> recentlyBooks(std::string user);
-	std::vector<Book> search(const SearchParams& params);
+	std::vector<Book> search(const SearchParams& sParams);
 	void printBooksList(const json& userData);
-	void changeSearchParams(SearchParams& params);
+	void changeSearchParams(SearchParams& sParams);
 	Book randomSearch(std::string author, std::vector<std::string> language, size_t year);
 	bool chooseUser(std::string& user);
-	SearchParams& getSearchParams(const std::string&);
+	void getSearchParams(const std::string& user, SearchParams& sParams);
+	json fileToJSON();
 }
+
+enum class Engine::Sort
+{
+	None,
+	Editions,
+	Old,
+	New,
+	Rating
+};
+
+struct Engine::SearchParams
+{
+	std::string author;
+	std::vector<std::string> langs;
+	std::string title;
+	size_t year{};
+	Sort sort = Sort::None;
+	size_t resListSize = 10;
+};

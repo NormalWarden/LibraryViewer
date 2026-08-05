@@ -9,14 +9,13 @@ namespace JSONTemplates
 	{
 		"username" : "name",
 		"searchParams" : {
-			"author" : "Any",
+			"author" : "",
 			"language" : [
 				"en"
 			],
 			"title" : "The lord of the rings",
 			"year" : 0,
-			"yearSearch" : "After",
-			"sort" : "None",
+			"sort" : "0",
 			"resListSize" : 10
 		},
 		"recentlyBooks" : [
@@ -25,7 +24,7 @@ namespace JSONTemplates
 				"title" : "The Lord of the Rings",
 				"language" : "en",
 				"firstPublishYear" : 1954,
-				"link" : "https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings?edition=key%3A/books/OL51694024M"
+				"link" : "https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings"
 			}
 		],
 		"favoriteBooks" : [
@@ -34,7 +33,7 @@ namespace JSONTemplates
 				"title" : "The Lord of the Rings",
 				"language" : "en",
 				"firstPublishYear" : 1954,
-				"link" : "https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings?edition=key%3A/books/OL51694024M"
+				"link" : "https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings"
 			}
 		]
 	}
@@ -48,8 +47,7 @@ namespace JSONTemplates
 			],
 			"title" : "",
 			"year" : 0,
-			"yearSearch" : "After",
-			"sort" : "None",
+			"sort" : "0",
 			"resListSize" : 10
 		},
 		"recentlyBooks" : [
