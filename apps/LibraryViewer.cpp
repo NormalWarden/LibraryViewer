@@ -24,7 +24,7 @@ int main()
 	}
 	std::cout << "Connection successfull\n";
 	
-	size_t choice{};
+	char choice{};
 	std::string user;
 	Engine::SearchParams sParams;
 	std::vector<Book> books;
@@ -42,8 +42,7 @@ int main()
 		{
 		case(1):
 			if (Engine::chooseUser(user))
-				//Engine::printBooksList(Engine::userBooks(user));
-				return 0;
+				Engine::printBooksList(Engine::userBooks(user));
 			else
 			{
 				std::cout << "File \"userData.txt\" can't be open from program directory. Exit...";
@@ -55,12 +54,19 @@ int main()
 			break;
 		case(3):
 			Engine::getSearchParams(user, sParams);
-			books = Engine::search(sParams);
-			//while (choice != 2) // 2=No on next lines
-				//break;
-				/*std::cout << "Settings for search: author " << author << " language: " << language ...
-				std::cout << "Would you like change them:\n1. Yes\n2. No"; cin >> choice; if (choice == 1) changeSearchParams(&author, &language, &title, &year, &sort, &length);
-			printBooksList(search(author, language, title, year, sort, length))*/
+			while (true)
+			{
+				Engine::printSearchParams(sParams);
+				std::cout << "\nDo you want to change the search parameters?\n1. Yes\n2. No\n";
+				std::cin >> choice;
+				std::cout << "\n";
+				if (choice == 1)
+				{
+					Engine::changeSearchParams(sParams);
+					Engine::saveSearchParams(user, sParams);
+				}
+			}
+			Engine::printBooksList(Engine::search(sParams));
 			break;
 			// TODO: create option to look book in more details
 		case(4):

@@ -18,8 +18,25 @@ void Engine::createUser(json& userData)
 	file.close();
 }
 
-std::vector<Book> Engine::userBooks(std::string user)
+std::vector<Book> Engine::userBooks(const std::string& user)
 {
+	json userData{ fileToJSON() };
+	std::vector<Book> books;
+
+	for (int i{}; i < userData["users"].size(); ++i)
+	{
+		if (userData["users"][i]["username"] == user)
+		{
+			if (userData["users"][i]["favoriteBooks"].empty())
+			{
+				std::cout << "User has no one favorite book\n";
+				return books;
+			}
+			// TODO: finish it after completing func "addFavoriteBook"
+			return books;
+		}
+	}
+
 	return std::vector<Book>();
 }
 
@@ -91,12 +108,64 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 	return books;
 }
 
-void Engine::printBooksList(const json& userData)
+void Engine::printBooksList(const std::vector<Book>& books)
 {
+	for (int book{}; book < books.size(); ++book)
+	{
+		std::cout << book << ". " << books[book].getTitle() 
+			<< "(" << books[book].getYear() << ", "
+			<< [](const std::vector<std::string>& authorsV)->std::string
+			{
+				std::string authorsS;
+				for (auto author : authorsV)
+					authorsS = authorsS + ", " + author;
+				return authorsS;
+			}(books[book].getAuthor())
+			<< ") in "
+			<< [](const std::vector<std::string>& langsV)->std::string
+			{
+				std::string langsS;
+				for (auto lang : langsV)
+					langsS = langsS + "," + lang;
+				return langsS;
+			}(books[book].getLanguage())
+			<< " - " << books[book].getLink() << "\n";
+	}
 }
 
 void Engine::changeSearchParams(SearchParams& sParams)
 {
+	char choice{};
+	while (true)
+	{
+		std::cout << "What do you want to change:\n1. Author\n2. Language\n3. Title\n4. Year\n5. Sort mode\n6. Size of search result list\n7. Nothing\n1...7: ";
+		std::cin >> choice;
+		switch (choice)
+		{
+		case 1:
+			changeAuthorSearch(sParams);
+			break;
+		case 2:
+			changeLanguageSearch(sParams);
+			break;
+		case 3:
+			changeTitleSearch(sParams);
+			break;
+		case 4:
+			changeYearSearch(sParams);
+			break;
+		case 5:
+			changeSortSearch(sParams);
+			break;
+		case 6:
+			changeResListSizeSearch(sParams);
+			break;
+		case 7:
+			return;
+		default:
+			std::cout << "\nInvalid input. Choose from 1 to 7\n";
+		}
+	}
 }
 
 Book Engine::randomSearch(std::string author, std::vector<std::string> language, size_t year)
@@ -187,24 +256,23 @@ void Engine::getSearchParams(const std::string& user, SearchParams& sParams)
 
 	if (userData.empty())
 	{
-		std::cout << "Can't get search parameters from file";
+		std::cout << "Can't get search parameters from file\n";
 		return;
 	}
-	for (int el{}; el < userData["users"]; ++el)
+	for (int i{}; i < userData["users"]; ++i)
 	{
-		if (userData["users"][el]["username"] == user)
+		if (userData["users"][i]["username"] == user)
 		{
-			sParams.author = userData["users"][el]["searchParams"]["author"];
-			sParams.langs = userData["users"][el]["searchParams"]["language"];
-			sParams.title = userData["users"][el]["searchParams"]["title"];
-			sParams.year = userData["users"][el]["searchParams"]["year"];
-			sParams.sort = userData["users"][el]["searchParams"]["sort"];
-			sParams.resListSize = userData["users"][el]["searchParams"]["resListSize"];
+			sParams.author = userData["users"][i]["searchParams"]["author"];
+			sParams.langs = userData["users"][i]["searchParams"]["language"];
+			sParams.title = userData["users"][i]["searchParams"]["title"];
+			sParams.year = userData["users"][i]["searchParams"]["year"];
+			sParams.sort = userData["users"][i]["searchParams"]["sort"];
+			sParams.resListSize = userData["users"][i]["searchParams"]["resListSize"];
 			return;
 		}
 	}
-	std::cout << "Can't find account with name: " << user;
-	return;
+	std::cout << "Can't find account with name: " << user << "\n";
 }
 
 json Engine::fileToJSON()
@@ -243,4 +311,136 @@ json Engine::fileToJSON()
 	}
 	file.close();
 	return userData;
+}
+
+void Engine::printSearchParams(const SearchParams& sParams)
+{
+	std::cout << "Search params:"
+		<< "\nAuthor: " << (sParams.author.empty() ? "any" : sParams.author)
+		<< "\nLanguage: " << (sParams.langs.empty() ? "any" : 
+			[](const std::vector<std::string>& langs)->std::string 
+			{
+				std::string langsStr; 
+				for (auto lang : langs) 
+					langsStr = langsStr + " " + lang;
+				return langsStr; 
+			}(sParams.langs))
+		<< "\nTitle: " << (sParams.title.empty() ? "any" : sParams.title)
+		<< "\nYear: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
+		<< "\nSort mode: " << 
+		[](const Sort& sort)->std::string
+		{
+			switch (sort)
+			{
+			case Sort::None:
+				return "relevant";
+			case Sort::Editions:
+				return "count of editions";
+			case Sort::Old:
+				return "old";
+			case Sort::New:
+				return "new";
+			case Sort::Rating:
+				return "rating";
+			}
+		}(sParams.sort)
+		<< "\nSearch results list size: " << sParams.resListSize << "\n";
+}
+
+void Engine::changeAuthorSearch(SearchParams& sParams)
+{
+	std::cout << "Enter the author or leave the field blank to search any author: ";
+	std::cin >> sParams.author;
+	std::cout << "\n";
+}
+
+void Engine::changeLanguageSearch(SearchParams& sParams)
+{
+	std::string newLang;
+	sParams.langs.clear();
+	while (true)
+	{
+		std::cout << "\nEnter the language name in English or leave the field blank to end editing language parameter: ";
+		std::cin >> newLang;
+		if (LangStorage::language.find(newLang) != LangStorage::language.end())
+			sParams.langs.push_back(LangStorage::language[newLang]);
+		std::cout << "\n";
+	}
+}
+
+void Engine::changeTitleSearch(SearchParams& sParams)
+{
+	std::cout << "\nEnter the title or leave the field blank to search any title: ";
+	std::cin >> sParams.title;
+	std::cout << "\n";
+}
+
+void Engine::changeYearSearch(SearchParams& sParams)
+{
+	int newYear{};
+	std::cout << "\nEnter the year or leave the field blank to search any year: ";
+	std::cin >> newYear; // TODO: try-catch and checks for number from input
+	sParams.year = newYear;
+	std::cout << "\n";
+}
+
+void Engine::changeSortSearch(SearchParams& sParams)
+{
+	char newSortMode{};
+	std::cout << "\nChoose the sort mode:\n1. Relevant\n2. Count of editions\n3. Old\n4. New\n5. Rating\n1...5: ";
+	std::cin >> newSortMode;
+	switch (newSortMode)
+	{
+	case 1:
+		sParams.sort = Sort::None;
+		break;
+	case 2:
+		sParams.sort = Sort::Editions;
+		break;
+	case 3:
+		sParams.sort = Sort::Old;
+		break;
+	case 4:
+		sParams.sort = Sort::New;
+		break;
+	case 5:
+		sParams.sort = Sort::Rating;
+		break;
+	default:
+		std::cout << "Invalid choosed number. Choosing sort mode \"relevant\"";
+		sParams.sort = Sort::None;
+	}
+	std::cout << "\n";
+}
+
+void Engine::changeResListSizeSearch(SearchParams& sParams)
+{
+	int newResListSize{};
+	std::cout << "\nEnter the size of search result list (1...100): ";
+	std::cin >> newResListSize; // TODO: try-catch and checks for number from input
+	sParams.resListSize = newResListSize;
+	std::cout << "\n";
+}
+
+void Engine::saveSearchParams(const std::string& user, const SearchParams& sParams)
+{
+	json userData{ fileToJSON() };
+
+	for (int i{}; i < userData["users"].size(); ++i)
+	{
+		if (userData["users"][i]["username"] == user)
+		{
+			userData["users"][i]["searchParams"]["author"] = sParams.author;
+			userData["users"][i]["searchParams"]["language"] = sParams.langs;
+			userData["users"][i]["searchParams"]["title"] = sParams.title;
+			userData["users"][i]["searchParams"]["year"] = sParams.year;
+			userData["users"][i]["searchParams"]["sort"] = sParams.sort;
+			userData["users"][i]["searchParams"]["resListSize"] = sParams.resListSize;
+			break;
+		}
+	}
+
+	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
+	file << userData.dump(4);
+	file.close();
 }

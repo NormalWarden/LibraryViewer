@@ -28,15 +28,24 @@ namespace Engine
 	struct SearchParams;
 	bool testConnection(); // test request for response 200
 	void createUser(json& userData);
-	std::vector<Book> userBooks(std::string user);
+	std::vector<Book> userBooks(const std::string& user);
 	std::vector<Book> recentlyBooks(std::string user);
 	std::vector<Book> search(const SearchParams& sParams);
-	void printBooksList(const json& userData);
+	void printBooksList(const std::vector<Book>& books);
 	void changeSearchParams(SearchParams& sParams);
 	Book randomSearch(std::string author, std::vector<std::string> language, size_t year);
 	bool chooseUser(std::string& user);
 	void getSearchParams(const std::string& user, SearchParams& sParams);
 	json fileToJSON();
+	void printSearchParams(const SearchParams& sParams);
+	void changeAuthorSearch(SearchParams& sParams);
+	void changeLanguageSearch(SearchParams& sParams);
+	void changeTitleSearch(SearchParams& sParams);
+	void changeYearSearch(SearchParams& sParams);
+	void changeSortSearch(SearchParams& sParams);
+	void changeResListSizeSearch(SearchParams& sParams);
+	void saveSearchParams(const std::string& user, const SearchParams& sParams);
+	void addFavoriteBook(const std::string& user);
 }
 
 enum class Engine::Sort

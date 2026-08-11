@@ -5,12 +5,8 @@
 
 namespace LangStorage
 {
-	enum class Language
+	inline std::unordered_map<std::string, std::string> language
 	{
-		Afar
-	};
-	inline std::unordered_map<std::string, Language> language
-	{
-		{ "aar", Language::Afar }
+		{ "Afar", "aar" }
 	};
 }

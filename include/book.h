@@ -15,8 +15,9 @@ public:
 	Book(const Book& book);
 	~Book() = default;
 	//operator=
-	std::string getAuthor();
-	std::vector<std::string> getLanguage(); 
-	std::string getTitle(); 
-	size_t getYear(); 
+	std::vector<std::string> getAuthor() const;
+	std::vector<std::string> getLanguage() const;
+	std::string getTitle() const; 
+	size_t getYear() const; 
+	std::string getLink() const;
 };
