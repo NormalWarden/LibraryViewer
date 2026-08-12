@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
+#include <random>
 
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
@@ -28,12 +29,12 @@ namespace Engine
 	struct SearchParams;
 	bool testConnection(); // test request for response 200
 	void createUser(json& userData);
-	std::vector<Book> userBooks(const std::string& user);
+	std::vector<Book> favoriteBooks(const std::string& user);
 	std::vector<Book> recentlyBooks(std::string user);
 	std::vector<Book> search(const SearchParams& sParams);
 	void printBooksList(const std::vector<Book>& books);
 	void changeSearchParams(SearchParams& sParams);
-	Book randomSearch(std::string author, std::vector<std::string> language, size_t year);
+	Book randomSearch();
 	bool chooseUser(std::string& user);
 	void getSearchParams(const std::string& user, SearchParams& sParams);
 	json fileToJSON();
@@ -45,7 +46,8 @@ namespace Engine
 	void changeSortSearch(SearchParams& sParams);
 	void changeResListSizeSearch(SearchParams& sParams);
 	void saveSearchParams(const std::string& user, const SearchParams& sParams);
-	void addFavoriteBook(const std::string& user);
+	void addFavoriteBook(const std::string& user, Book book);
+	void addRecentlyBook(const std::string& user, Book book);
 }
 
 enum class Engine::Sort

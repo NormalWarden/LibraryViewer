@@ -8,25 +8,25 @@ Book::Book(const Book& book)
 
 std::vector<std::string> Book::getAuthor() const
 {
-	return std::vector<std::string>();
+	return author;
 }
 
 std::vector<std::string> Book::getLanguage() const
 {
-	return std::vector<std::string>();
+	return language;
 }
 
 std::string Book::getTitle() const
 {
-	return std::string();
+	return title;
 }
 
 size_t Book::getYear() const
 {
-	return size_t();
+	return year;
 }
 
 std::string Book::getLink() const
 {
-	return std::string();
+	return link;
 }

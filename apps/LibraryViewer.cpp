@@ -37,12 +37,12 @@ int main()
 			<< "5. Choose user\n"
 			<< "6. Exit\n"
 			<< "1...6: ";
-		std::cin >> choice; // TODO: check for uint (may be entered number 0< or symbol)
+		std::cin >> choice;
 		switch (choice)
 		{
 		case(1):
 			if (Engine::chooseUser(user))
-				Engine::printBooksList(Engine::userBooks(user));
+				Engine::printBooksList(Engine::favoriteBooks(user));
 			else
 			{
 				std::cout << "File \"userData.txt\" can't be open from program directory. Exit...";
@@ -50,7 +50,8 @@ int main()
 			}
 			break;
 		case(2):
-			//if (Engine::selectUser(user)) Engine::printBooksList(Engine::recentlyBooks(user));
+			if (Engine::chooseUser(user)) 
+				Engine::printBooksList(Engine::recentlyBooks(user));
 			break;
 		case(3):
 			Engine::getSearchParams(user, sParams);
@@ -70,10 +71,7 @@ int main()
 			break;
 			// TODO: create option to look book in more details
 		case(4):
-			/*while (choice != 2) // 2=No on next lines
-				cout << "settings for search: author " << author << " language: " << language ...
-				cout << "would u like change them:\n1. Yes\n2. No"; cin >> choice; if (choice == 1) changeSearchParams(&author, &language, &year);
-			randomSearch(author, language, year);*/
+			Engine::randomSearch();
 			break;
 			// TODO: create option to look book in more details
 		case(5):

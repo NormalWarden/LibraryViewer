@@ -18,7 +18,7 @@ void Engine::createUser(json& userData)
 	file.close();
 }
 
-std::vector<Book> Engine::userBooks(const std::string& user)
+std::vector<Book> Engine::favoriteBooks(const std::string& user)
 {
 	json userData{ fileToJSON() };
 	std::vector<Book> books;
@@ -42,6 +42,23 @@ std::vector<Book> Engine::userBooks(const std::string& user)
 
 std::vector<Book> Engine::recentlyBooks(std::string user)
 {
+	json userData{ fileToJSON() };
+	std::vector<Book> books;
+
+	for (int i{}; i < userData["users"].size(); ++i)
+	{
+		if (userData["users"][i]["username"] == user)
+		{
+			if (userData["users"][i]["recentlyBooks"].empty())
+			{
+				std::cout << "User has no one recently book\n";
+				return books;
+			}
+			// TODO: finish it after completing func "addRecentlyBook"
+			return books;
+		}
+	}
+
 	return std::vector<Book>();
 }
 
@@ -58,8 +75,10 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 				return correctTitle;
 			}(sParams.title) });
 	}
+	if (sParams.year != 0)
+		cprParams.Add({ "publish_year", std::to_string(sParams.year) });
 	if (!sParams.author.empty())
-		cprParams.Add({"author", sParams.author});
+		cprParams.Add({ "author", sParams.author });
 	if (!sParams.langs.empty())
 		for (auto lang : sParams.langs)
 			cprParams.Add({ "language", lang });
@@ -87,13 +106,6 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 	std::vector<Book> books;
 	for (int el{ 0 }; el < sParams.resListSize; ++el)
 	{
-		std::cout << "https://openlibrary.org" + j["docs"][el]["key"].get<std::string>() + "/" + j["docs"][el]["title"].get<std::string>();
-		std::cout << [](const json& j, const int& iter)->std::string
-			{
-				std::string link{ "https://openlibrary.org" + j["docs"][iter]["key"].get<std::string>() + "/" + j["docs"][iter]["title"].get<std::string>() };
-				std::replace(begin(link), end(link), ' ', '_');
-				return link;
-			}(j, el);
 		books.push_back(Book(j["docs"][el]["author_name"],
 			j["docs"][el]["language"],
 			j["docs"][el]["title"],
@@ -168,9 +180,73 @@ void Engine::changeSearchParams(SearchParams& sParams)
 	}
 }
 
-Book Engine::randomSearch(std::string author, std::vector<std::string> language, size_t year)
+Book Engine::randomSearch()
 {
-	return Book();
+	SearchParams sParams;
+	char choice{};
+	std::string input;
+	while (true)
+	{
+		std::cout << "Do you want to specify some search parameters?\n1. Yes\n2. No\n";
+		std::cin >> choice;
+		if (choice == 1)
+		{
+			std::cout << "\nWhich parameter do you want to change?\n1. Author\n2. Language\n3. Publish year\n";
+			std::cin >> choice;
+			switch (choice)
+			{
+			case 1:
+				std::cout << "\nEnter the author name: ";
+				std::cin >> input;
+				sParams.author = input;
+				break;
+			case 2:
+				std::cout << "\nEnter the name of language: ";
+				std::cin >> input;
+				sParams.langs.push_back(input);
+				break;
+			case 3:
+				std::cout << "\nEnter the publish year: ";
+				std::cin >> input;
+				sParams.year = std::stoi(input);
+				break;
+			default:
+				std::cout << "\nInvalid input. Changes reset";
+			}
+			std::cout << "\n";
+		}
+		else
+			break;
+	}
+	cpr::Parameters cprParams;
+	if (sParams.year != 0)
+		cprParams.Add({ "publish_year", std::to_string(sParams.year) });
+	if (!sParams.author.empty())
+		cprParams.Add({ "author", sParams.author });
+	if (!sParams.langs.empty())
+		for (auto lang : sParams.langs)
+			cprParams.Add({ "language", lang });
+
+	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" }, cprParams);
+	json j = json::parse(r.text);
+	std::vector<Book> books;
+	for (int el{ 0 }; el < 100; ++el)
+	{
+		books.push_back(Book(j["docs"][el]["author_name"],
+			j["docs"][el]["language"],
+			j["docs"][el]["title"],
+			[](const json& j, const int& iter)->std::string
+			{
+				std::string link{ "https://openlibrary.org" + j["docs"][iter]["key"].get<std::string>() + "/" + j["docs"][iter]["title"].get<std::string>() };
+				std::replace(begin(link), end(link), ' ', '_');
+				return link;
+			}(j, el),
+			j["docs"][el]["first_publish_year"]));
+	}
+	std::random_device rd;
+	std::mt19937 rng{ rd() };
+	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,99 };
+	return books[uid(rng)];
 }
 
 bool Engine::chooseUser(std::string& userName)
@@ -436,6 +512,54 @@ void Engine::saveSearchParams(const std::string& user, const SearchParams& sPara
 			userData["users"][i]["searchParams"]["year"] = sParams.year;
 			userData["users"][i]["searchParams"]["sort"] = sParams.sort;
 			userData["users"][i]["searchParams"]["resListSize"] = sParams.resListSize;
+			break;
+		}
+	}
+
+	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
+	file << userData.dump(4);
+	file.close();
+}
+
+void Engine::addFavoriteBook(const std::string& user, Book book)
+{
+	json userData{ fileToJSON() };
+
+	for (int i{}; i < userData["users"].size(); ++i)
+	{
+		if (userData["users"][i]["username"] == user)
+		{
+			userData["users"][i]["favoriteBooks"].push_back({
+				{"author", book.getAuthor()},
+				{"language", book.getLanguage()},
+				{"title", book.getTitle()},
+				{"year", book.getYear()},
+				{"link", book.getLink()},
+				});
+			break;
+		}
+	}
+
+	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
+	file << userData.dump(4);
+	file.close();
+}
+
+void Engine::addRecentlyBook(const std::string& user, Book book)
+{
+	json userData{ fileToJSON() };
+
+	for (int i{}; i < userData["users"].size(); ++i)
+	{
+		if (userData["users"][i]["username"] == user)
+		{
+			userData["users"][i]["recentlyBooks"].push_back({
+				{"author", book.getAuthor()},
+				{"language", book.getLanguage()},
+				{"title", book.getTitle()},
+				{"year", book.getYear()},
+				{"link", book.getLink()},
+				});
 			break;
 		}
 	}
