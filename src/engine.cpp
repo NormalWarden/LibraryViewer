@@ -1,21 +1,42 @@
 #include "engine.h"
 
-bool Engine::testConnection()
+long Engine::testConnection()
 {
 	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" });
-	return r.status_code == 200 ? CONNECTION_SUCCESS : CONNECTION_FAILURE;
+	return r.status_code;
 }
 
-void Engine::createUser(json& userData)
+bool Engine::createUser(json& userData)
 {
 	std::string userName;
-	std::cout << "Enter the name new user: ";
+	std::cout << "Enter the new user name: ";
 	std::cin >> userName;
+
+	// Checks
+	if (userName.empty())
+	{
+		std::cout << "\nUser not created: failed to create user without name";
+		return false;
+	}
+	for (int i{}; i < userData["users"].size(); ++i)
+	{
+		if (userData["users"][i]["username"] == userName)
+		{
+			std::cout << "\nUser not created: a user with that name already exists";
+			return false;
+		}
+	}
+
+	// Saving
 	userData["users"].push_back(json::parse(JSONTemplates::userTemplate));
 	userData["users"].back()["username"] = userName;
-	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
-	file << userData.dump(4);
-	file.close();
+	if (JSONToFile(userData))
+		return true;
+	else
+	{
+		std::cout << "\nFailed to update user data in file";
+		return false;
+	}
 }
 
 std::vector<Book> Engine::favoriteBooks(const std::string& user)
@@ -145,7 +166,7 @@ void Engine::printBooksList(const std::vector<Book>& books)
 	}
 }
 
-void Engine::changeSearchParams(SearchParams& sParams)
+bool Engine::changeSearchParams(const std::string& user, SearchParams& sParams)
 {
 	char choice{};
 	while (true)
@@ -173,7 +194,13 @@ void Engine::changeSearchParams(SearchParams& sParams)
 			changeResListSizeSearch(sParams);
 			break;
 		case 7:
-			return;
+			if (saveSearchParams(user, sParams))
+				return true;
+			else
+			{
+				std::cout << "\nFailed to update user data in file";
+				return false;
+			}
 		default:
 			std::cout << "\nInvalid input. Choose from 1 to 7\n";
 		}
@@ -356,7 +383,6 @@ json Engine::fileToJSON()
 	std::fstream file(USERDATA_FILENAME);
 	if (!file)
 	{
-		file.close();
 		file.open(USERDATA_FILENAME, std::ios::out); // create file
 		file.close();
 		file.open(USERDATA_FILENAME);
@@ -498,7 +524,7 @@ void Engine::changeResListSizeSearch(SearchParams& sParams)
 	std::cout << "\n";
 }
 
-void Engine::saveSearchParams(const std::string& user, const SearchParams& sParams)
+bool Engine::saveSearchParams(const std::string& user, const SearchParams& sParams)
 {
 	json userData{ fileToJSON() };
 
@@ -516,12 +542,16 @@ void Engine::saveSearchParams(const std::string& user, const SearchParams& sPara
 		}
 	}
 
-	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
-	file << userData.dump(4);
-	file.close();
+	if (JSONToFile(userData))
+		return true;
+	else
+	{
+		std::cout << "\nFailed to update user data in file";
+		return false;
+	}
 }
 
-void Engine::addFavoriteBook(const std::string& user, Book book)
+bool Engine::addFavoriteBook(const std::string& user, Book book)
 {
 	json userData{ fileToJSON() };
 
@@ -540,12 +570,16 @@ void Engine::addFavoriteBook(const std::string& user, Book book)
 		}
 	}
 
-	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
-	file << userData.dump(4);
-	file.close();
+	if (JSONToFile(userData))
+		return true;
+	else
+	{
+		std::cout << "\nFailed to update user data in file";
+		return false;
+	}
 }
 
-void Engine::addRecentlyBook(const std::string& user, Book book)
+bool Engine::addRecentlyBook(const std::string& user, Book book)
 {
 	json userData{ fileToJSON() };
 
@@ -564,7 +598,26 @@ void Engine::addRecentlyBook(const std::string& user, Book book)
 		}
 	}
 
+	if (JSONToFile(userData))
+		return true;
+	else
+	{
+		std::cout << "\nFailed to update user data in file";
+		return false;
+	}
+}
+
+bool Engine::JSONToFile(const json& userData)
+{
 	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
+	if (!file.is_open())
+		return false;
 	file << userData.dump(4);
+	if (!file.good())
+	{
+		file.close();
+		return false;
+	}
 	file.close();
+	return true;
 }

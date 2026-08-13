@@ -6,8 +6,20 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable (LibraryViewer apps/LibraryViewer.cpp src/engine.cpp src/book.cpp)
-
-find_package(cpr CONFIG REQUIRED)
-target_link_libraries(LibraryViewer PRIVATE cpr::cpr)
-
 target_include_directories(LibraryViewer PRIVATE include)
+find_package(cpr CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+target_link_libraries(LibraryViewer PRIVATE cpr::cpr nlohmann_json::nlohmann_json)
+
+include(FetchContent)
+FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/1b6f64d659944658a4c685b7bd9f04c1c3b8a39b.zip)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+add_executable(tests tests/LibraryViewerTests.cpp src/book.cpp src/engine.cpp)
+target_link_libraries(tests PRIVATE gtest_main cpr::cpr nlohmann_json::nlohmann_json)
+include(GoogleTest)
+gtest_discover_tests(tests)
+
+target_include_directories(tests PRIVATE include)

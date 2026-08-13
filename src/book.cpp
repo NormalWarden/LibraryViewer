@@ -6,6 +6,15 @@ Book::Book(std::vector<std::string> author, std::vector<std::string> language, s
 Book::Book(const Book& book)
 	: author(book.author), language(book.language), title(book.title), year(book.year), link(book.link) {}
 
+Book& Book::operator=(const Book& bookSrc)
+{
+	this->author = bookSrc.getAuthor();
+	this->language = bookSrc.getAuthor();
+	this->title = bookSrc.getTitle();
+	this->year = bookSrc.getYear();
+	this->link = bookSrc.getLink();
+	return *this;
+}
 std::vector<std::string> Book::getAuthor() const
 {
 	return author;

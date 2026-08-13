@@ -16,12 +16,15 @@ int main()
 	//std::cout << j["docs"][0].dump(4);
 
 
-
-	if (Engine::testConnection() == CONNECTION_FAILURE)
 	{
-		std::cout << "Unable to connect to https://openlibrary.org/";
-		return CONNECTION_FAILURE;
+		long r = Engine::testConnection();
+		if (r != 200)
+		{
+			std::cout << "Unable to connect to https://openlibrary.org/. Error: " << r;
+			return 1;
+		}
 	}
+	
 	std::cout << "Connection successfull\n";
 	
 	char choice{};
@@ -63,8 +66,7 @@ int main()
 				std::cout << "\n";
 				if (choice == 1)
 				{
-					Engine::changeSearchParams(sParams);
-					Engine::saveSearchParams(user, sParams);
+					Engine::changeSearchParams(user, sParams);
 				}
 			}
 			Engine::printBooksList(Engine::search(sParams));
