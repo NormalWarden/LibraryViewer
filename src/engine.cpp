@@ -6,21 +6,17 @@ long Engine::testConnection()
 	return r.status_code;
 }
 
-bool Engine::createUser(json& userData)
+bool Engine::createUser(const std::string& username, json& userdata)
 {
-	std::string userName;
-	std::cout << "Enter the new user name: ";
-	std::cin >> userName;
-
 	// Checks
-	if (userName.empty())
+	if (username.empty())
 	{
 		std::cout << "\nUser not created: failed to create user without name";
 		return false;
 	}
-	for (int i{}; i < userData["users"].size(); ++i)
+	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userData["users"][i]["username"] == userName)
+		if (userdata["users"][i]["username"] == username)
 		{
 			std::cout << "\nUser not created: a user with that name already exists";
 			return false;
@@ -28,9 +24,9 @@ bool Engine::createUser(json& userData)
 	}
 
 	// Saving
-	userData["users"].push_back(json::parse(JSONTemplates::userTemplate));
-	userData["users"].back()["username"] = userName;
-	if (JSONToFile(userData))
+	userdata["users"].push_back(json::parse(JSONTemplates::userTemplate));
+	userdata["users"].back()["username"] = username;
+	if (JSONToFile(userdata))
 		return true;
 	else
 	{
@@ -39,16 +35,72 @@ bool Engine::createUser(json& userData)
 	}
 }
 
-std::vector<Book> Engine::favoriteBooks(const std::string& user)
+bool Engine::chooseUser(std::string& username)
 {
-	json userData{ fileToJSON() };
+	json userdata{ fileToJSON() };
+
+	if (userdata["users"].size() == 1)
+	{
+		username = userdata["users"][0]["username"];
+		return USER_SELECTED;
+	}
+	else
+	{
+		int choice{};
+		while (true)
+		{
+			std::cin >> choice;
+			if (choice == 1)
+			{
+				username = "";
+				return USER_SELECTED;
+			}
+			else if (choice == userdata["users"].size() + 1)
+			{
+				std::string userName;
+				std::cout << "Enter the new user name: ";
+				std::cin >> userName;
+				createUser(username, userdata);
+				username = userdata["users"].back()["username"];
+				return USER_SELECTED;
+			}
+			else
+			{
+				try
+				{
+					username = userdata["users"].at(choice - 1)["username"];
+					return USER_SELECTED;
+				}
+				catch (json::out_of_range)
+				{
+					std::cout << "\nInvalid number. Choose another one: ";
+				}
+			}
+		}
+	}
+	return USER_SELECTED;
+}
+
+std::vector<std::string> Engine::getUsers(const std::string& filename)
+{
+	json data{ fileToJSON() };
+	std::vector<std::string> users;
+	
+	for (int i{}; i < data["users"].size(); ++i)
+		users.push_back(data["users"][i]["username"]);
+	return users;
+}
+
+std::vector<Book> Engine::favoriteBooks(const std::string& username)
+{
+	json userdata{ fileToJSON() };
 	std::vector<Book> books;
 
-	for (int i{}; i < userData["users"].size(); ++i)
+	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userData["users"][i]["username"] == user)
+		if (userdata["users"][i]["username"] == username)
 		{
-			if (userData["users"][i]["favoriteBooks"].empty())
+			if (userdata["users"][i]["favoriteBooks"].empty())
 			{
 				std::cout << "User has no one favorite book\n";
 				return books;
@@ -61,16 +113,16 @@ std::vector<Book> Engine::favoriteBooks(const std::string& user)
 	return std::vector<Book>();
 }
 
-std::vector<Book> Engine::recentlyBooks(std::string user)
+std::vector<Book> Engine::recentlyBooks(const std::string username)
 {
-	json userData{ fileToJSON() };
+	json userdata{ fileToJSON() };
 	std::vector<Book> books;
 
-	for (int i{}; i < userData["users"].size(); ++i)
+	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userData["users"][i]["username"] == user)
+		if (userdata["users"][i]["username"] == username)
 		{
-			if (userData["users"][i]["recentlyBooks"].empty())
+			if (userdata["users"][i]["recentlyBooks"].empty())
 			{
 				std::cout << "User has no one recently book\n";
 				return books;
@@ -141,72 +193,6 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 	return books;
 }
 
-void Engine::printBooksList(const std::vector<Book>& books)
-{
-	for (int book{}; book < books.size(); ++book)
-	{
-		std::cout << book << ". " << books[book].getTitle() 
-			<< "(" << books[book].getYear() << ", "
-			<< [](const std::vector<std::string>& authorsV)->std::string
-			{
-				std::string authorsS;
-				for (auto author : authorsV)
-					authorsS = authorsS + ", " + author;
-				return authorsS;
-			}(books[book].getAuthor())
-			<< ") in "
-			<< [](const std::vector<std::string>& langsV)->std::string
-			{
-				std::string langsS;
-				for (auto lang : langsV)
-					langsS = langsS + "," + lang;
-				return langsS;
-			}(books[book].getLanguage())
-			<< " - " << books[book].getLink() << "\n";
-	}
-}
-
-bool Engine::changeSearchParams(const std::string& user, SearchParams& sParams)
-{
-	char choice{};
-	while (true)
-	{
-		std::cout << "What do you want to change:\n1. Author\n2. Language\n3. Title\n4. Year\n5. Sort mode\n6. Size of search result list\n7. Nothing\n1...7: ";
-		std::cin >> choice;
-		switch (choice)
-		{
-		case 1:
-			changeAuthorSearch(sParams);
-			break;
-		case 2:
-			changeLanguageSearch(sParams);
-			break;
-		case 3:
-			changeTitleSearch(sParams);
-			break;
-		case 4:
-			changeYearSearch(sParams);
-			break;
-		case 5:
-			changeSortSearch(sParams);
-			break;
-		case 6:
-			changeResListSizeSearch(sParams);
-			break;
-		case 7:
-			if (saveSearchParams(user, sParams))
-				return true;
-			else
-			{
-				std::cout << "\nFailed to update user data in file";
-				return false;
-			}
-		default:
-			std::cout << "\nInvalid input. Choose from 1 to 7\n";
-		}
-	}
-}
-
 Book Engine::randomSearch()
 {
 	SearchParams sParams;
@@ -268,7 +254,7 @@ Book Engine::randomSearch()
 				std::replace(begin(link), end(link), ' ', '_');
 				return link;
 			}(j, el),
-			j["docs"][el]["first_publish_year"]));
+				j["docs"][el]["first_publish_year"]));
 	}
 	std::random_device rd;
 	std::mt19937 rng{ rd() };
@@ -276,75 +262,50 @@ Book Engine::randomSearch()
 	return books[uid(rng)];
 }
 
-bool Engine::chooseUser(std::string& userName)
+bool Engine::changeSearchParams(const std::string& username, SearchParams& sParams)
 {
-	json userData{ fileToJSON() };
-
-	std::cout << "Now chosen ";
-	if (userName.empty())
-		std::cout << "guest";
-	else
-		std::cout << userName;
-
-	int choice{};
-	std::cout << "\nDo you want to change account? \n1.Yes\n2.No\n";
-	std::cin >> choice;
-	if (choice == 1)
+	char choice{};
+	while (true)
 	{
-		if (userData["users"].size() < 1)
+		std::cout << "What do you want to change:\n1. Author\n2. Language\n3. Title\n4. Year\n5. Sort mode\n6. Size of search result list\n7. Nothing\n1...7: ";
+		std::cin >> choice;
+		switch (choice)
 		{
-			createUser(userData);
-			userName = userData["users"][0]["username"];
-			return USER_SELECTED;
-		}
-		else if (userData["users"].size() == 1)
-		{
-			userName = userData["users"][0]["username"];
-			return USER_SELECTED;
-		}
-		else
-		{
-			std::cout << "Choose guest user, your user name or create new one:";
-			std::cout << "\n1. Guest";
-			for (int i{ 0 }; i < userData["users"].size(); ++i)
-				std::cout << "\n" << i + 2 << ". " << userData["users"][i]["username"];
-			std::cout << "\n" << userData["users"].size() + 2 << ". Create new one\n1..." << userData["users"].size() + 2 << ": ";
-			int choice{};
-			while (true)
+		case 1:
+			changeAuthorSearch(sParams);
+			break;
+		case 2:
+			changeLanguageSearch(sParams);
+			break;
+		case 3:
+			changeTitleSearch(sParams);
+			break;
+		case 4:
+			changeYearSearch(sParams);
+			break;
+		case 5:
+			changeSortSearch(sParams);
+			break;
+		case 6:
+			changeResListSizeSearch(sParams);
+			break;
+		case 7:
+			if (saveSearchParams(username, sParams))
+				return true;
+			else
 			{
-				std::cin >> choice;
-				if (choice == 1)
-				{
-					userName = "";
-					return USER_SELECTED;
-				}
-				else if (choice == userData["users"].size() + 1)
-				{
-					createUser(userData);
-					userName = userData["users"].back()["username"];
-					return USER_SELECTED;
-				}
-				else
-				{
-					try
-					{
-						userName = userData["users"].at(choice - 1)["username"];
-						return USER_SELECTED;
-					}
-					catch (json::out_of_range)
-					{
-						std::cout << "\nInvalid number. Choose another one: ";
-					}
-				}
+				std::cout << "\nFailed to update user data in file";
+				return false;
 			}
+		default:
+			std::cout << "\nInvalid input. Choose from 1 to 7\n";
 		}
 	}
-	return USER_SELECTED;
 }
 
-void Engine::getSearchParams(const std::string& user, SearchParams& sParams)
+Engine::ResponseCode Engine::getSearchParams(const std::string& username, SearchParams& sParams)
 {
-	if (user.empty()) // guest
+	if (username.empty()) // guest
 	{
 		sParams.author = "";
 		sParams.langs = { "eng" };
@@ -352,67 +313,27 @@ void Engine::getSearchParams(const std::string& user, SearchParams& sParams)
 		sParams.year = 1954;
 		sParams.sort = Sort::None;
 		sParams.resListSize = 10;
-		return;
+		return ResponseCode::Ok;
 	}
 
-	json userData{ Engine::fileToJSON() };
+	json userdata{ Engine::fileToJSON() };
 
-	if (userData.empty())
+	if (userdata.empty())
+		return ResponseCode::EmptyJSON;
+	for (int i{}; i < userdata["users"]; ++i)
 	{
-		std::cout << "Can't get search parameters from file\n";
-		return;
-	}
-	for (int i{}; i < userData["users"]; ++i)
-	{
-		if (userData["users"][i]["username"] == user)
+		if (userdata["users"][i]["username"] == username)
 		{
-			sParams.author = userData["users"][i]["searchParams"]["author"];
-			sParams.langs = userData["users"][i]["searchParams"]["language"];
-			sParams.title = userData["users"][i]["searchParams"]["title"];
-			sParams.year = userData["users"][i]["searchParams"]["year"];
-			sParams.sort = userData["users"][i]["searchParams"]["sort"];
-			sParams.resListSize = userData["users"][i]["searchParams"]["resListSize"];
-			return;
+			sParams.author = userdata["users"][i]["searchParams"]["author"];
+			sParams.langs = userdata["users"][i]["searchParams"]["language"];
+			sParams.title = userdata["users"][i]["searchParams"]["title"];
+			sParams.year = userdata["users"][i]["searchParams"]["year"];
+			sParams.sort = userdata["users"][i]["searchParams"]["sort"];
+			sParams.resListSize = userdata["users"][i]["searchParams"]["resListSize"];
+			return ResponseCode::Ok;
 		}
 	}
-	std::cout << "Can't find account with name: " << user << "\n";
-}
-
-json Engine::fileToJSON()
-{
-	std::fstream file(USERDATA_FILENAME);
-	if (!file)
-	{
-		file.open(USERDATA_FILENAME, std::ios::out); // create file
-		file.close();
-		file.open(USERDATA_FILENAME);
-	}
-
-	json userData;
-	try
-	{
-		userData = json::parse(file);
-	}
-	catch (...)
-	{
-		int choice{};
-		std::cout << "\nUser data is broken. Would you correct it?\n1. Yes\n2. No\n1...2: ";
-		std::cin >> choice;
-		if (choice == 1)
-		{
-			file.close();
-			file.open(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
-			file << JSONTemplates::fullTemplate;
-			userData = json::parse(JSONTemplates::fullTemplate);
-		}
-		else
-		{
-			std::cout << "\nBad transfer info from file to json format";
-			return json();
-		}
-	}
-	file.close();
-	return userData;
+	return ResponseCode::NoUser;
 }
 
 void Engine::printSearchParams(const SearchParams& sParams)
@@ -447,6 +368,33 @@ void Engine::printSearchParams(const SearchParams& sParams)
 			}
 		}(sParams.sort)
 		<< "\nSearch results list size: " << sParams.resListSize << "\n";
+}
+
+bool Engine::saveSearchParams(const std::string& username, const SearchParams& sParams)
+{
+	json userdata{ fileToJSON() };
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"] == username)
+		{
+			userdata["users"][i]["searchParams"]["author"] = sParams.author;
+			userdata["users"][i]["searchParams"]["language"] = sParams.langs;
+			userdata["users"][i]["searchParams"]["title"] = sParams.title;
+			userdata["users"][i]["searchParams"]["year"] = sParams.year;
+			userdata["users"][i]["searchParams"]["sort"] = sParams.sort;
+			userdata["users"][i]["searchParams"]["resListSize"] = sParams.resListSize;
+			break;
+		}
+	}
+
+	if (JSONToFile(userdata))
+		return true;
+	else
+	{
+		std::cout << "\nFailed to update user data in file";
+		return false;
+	}
 }
 
 void Engine::changeAuthorSearch(SearchParams& sParams)
@@ -524,42 +472,15 @@ void Engine::changeResListSizeSearch(SearchParams& sParams)
 	std::cout << "\n";
 }
 
-bool Engine::saveSearchParams(const std::string& user, const SearchParams& sParams)
+bool Engine::addFavoriteBook(const std::string& username, Book book)
 {
-	json userData{ fileToJSON() };
+	json userdata{ fileToJSON() };
 
-	for (int i{}; i < userData["users"].size(); ++i)
+	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userData["users"][i]["username"] == user)
+		if (userdata["users"][i]["username"] == username)
 		{
-			userData["users"][i]["searchParams"]["author"] = sParams.author;
-			userData["users"][i]["searchParams"]["language"] = sParams.langs;
-			userData["users"][i]["searchParams"]["title"] = sParams.title;
-			userData["users"][i]["searchParams"]["year"] = sParams.year;
-			userData["users"][i]["searchParams"]["sort"] = sParams.sort;
-			userData["users"][i]["searchParams"]["resListSize"] = sParams.resListSize;
-			break;
-		}
-	}
-
-	if (JSONToFile(userData))
-		return true;
-	else
-	{
-		std::cout << "\nFailed to update user data in file";
-		return false;
-	}
-}
-
-bool Engine::addFavoriteBook(const std::string& user, Book book)
-{
-	json userData{ fileToJSON() };
-
-	for (int i{}; i < userData["users"].size(); ++i)
-	{
-		if (userData["users"][i]["username"] == user)
-		{
-			userData["users"][i]["favoriteBooks"].push_back({
+			userdata["users"][i]["favoriteBooks"].push_back({
 				{"author", book.getAuthor()},
 				{"language", book.getLanguage()},
 				{"title", book.getTitle()},
@@ -570,7 +491,7 @@ bool Engine::addFavoriteBook(const std::string& user, Book book)
 		}
 	}
 
-	if (JSONToFile(userData))
+	if (JSONToFile(userdata))
 		return true;
 	else
 	{
@@ -579,15 +500,15 @@ bool Engine::addFavoriteBook(const std::string& user, Book book)
 	}
 }
 
-bool Engine::addRecentlyBook(const std::string& user, Book book)
+bool Engine::addRecentlyBook(const std::string& username, Book book)
 {
-	json userData{ fileToJSON() };
+	json userdata{ fileToJSON() };
 
-	for (int i{}; i < userData["users"].size(); ++i)
+	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userData["users"][i]["username"] == user)
+		if (userdata["users"][i]["username"] == username)
 		{
-			userData["users"][i]["recentlyBooks"].push_back({
+			userdata["users"][i]["recentlyBooks"].push_back({
 				{"author", book.getAuthor()},
 				{"language", book.getLanguage()},
 				{"title", book.getTitle()},
@@ -598,7 +519,7 @@ bool Engine::addRecentlyBook(const std::string& user, Book book)
 		}
 	}
 
-	if (JSONToFile(userData))
+	if (JSONToFile(userdata))
 		return true;
 	else
 	{
@@ -607,12 +528,49 @@ bool Engine::addRecentlyBook(const std::string& user, Book book)
 	}
 }
 
-bool Engine::JSONToFile(const json& userData)
+json Engine::fileToJSON(const std::string& filename)
 {
-	std::fstream file(USERDATA_FILENAME, std::ios::out | std::ios::trunc);
+	std::fstream file(filename);
+	if (!file)
+	{
+		file.open(filename, std::ios::out); // create file
+		file.close();
+		file.open(filename);
+	}
+
+	json userdata;
+	try
+	{
+		userdata = json::parse(file);
+	}
+	catch (...)
+	{
+		int choice{};
+		std::cout << "\nUser data is broken. Would you correct it?\n1. Yes\n2. No\n1...2: ";
+		std::cin >> choice;
+		if (choice == 1)
+		{
+			file.close();
+			file.open(filename, std::ios::out | std::ios::trunc);
+			file << JSONTemplates::fullTemplate;
+			userdata = json::parse(JSONTemplates::fullTemplate);
+		}
+		else
+		{
+			std::cout << "\nBad transfer info from file to json format";
+			return json();
+		}
+	}
+	file.close();
+	return userdata;
+}
+
+bool Engine::JSONToFile(const json& userdata, const std::string& filename)
+{
+	std::fstream file(filename, std::ios::out | std::ios::trunc);
 	if (!file.is_open())
 		return false;
-	file << userData.dump(4);
+	file << userdata.dump(4);
 	if (!file.good())
 	{
 		file.close();

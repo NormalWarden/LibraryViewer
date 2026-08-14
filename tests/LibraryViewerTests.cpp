@@ -53,3 +53,8 @@ TEST(BookTest, VerifyOperatorAssignment)
 	EXPECT_EQ("https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings", bookCopy.getLink());
 	EXPECT_EQ(1954, bookCopy.getYear());
 }
+
+TEST(EngineTest, TestConnection)
+{
+	ASSERT_EQ(Engine::testConnection(), 200);
+}

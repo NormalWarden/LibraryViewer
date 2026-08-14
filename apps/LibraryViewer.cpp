@@ -4,12 +4,14 @@
 #include <nlohmann/json.hpp>
 
 #include "engine.h"
+#include "ui.h"
 
 using json = nlohmann::json;
 
 int main()
 {
-	std::cout << "Trying to connect to https://openlibrary.org/...\n";
+	UI::firstMessage();
+	UI::beforeConnection();
 	/*cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
 		cpr::Parameters{ {"q", "the+lord+of+the+rings"} });
 	json j = json::parse(r.text);*/
@@ -20,12 +22,12 @@ int main()
 		long r = Engine::testConnection();
 		if (r != 200)
 		{
-			std::cout << "Unable to connect to https://openlibrary.org/. Error: " << r;
+			UI::failedConnection(r);
 			return 1;
 		}
 	}
 	
-	std::cout << "Connection successfull\n";
+	UI::successfulConnection();
 	
 	char choice{};
 	std::string user;
@@ -33,31 +35,17 @@ int main()
 	std::vector<Book> books;
 	while (true)
 	{
-		std::cout << "1. Open list of my books\n"
-			<< "2. Look recently looked books\n"
-			<< "3. Search\n"
-			<< "4. Search randomly\n"
-			<< "5. Choose user\n"
-			<< "6. Exit\n"
-			<< "1...6: ";
-		std::cin >> choice;
-		switch (choice)
+		UI::printOptions();
+		switch (UI::getUserChoice())
 		{
 		case(1):
-			if (Engine::chooseUser(user))
-				Engine::printBooksList(Engine::favoriteBooks(user));
-			else
-			{
-				std::cout << "File \"userData.txt\" can't be open from program directory. Exit...";
-				return 1;
-			}
+			UI::printBooks(Engine::favoriteBooks(user));
 			break;
 		case(2):
-			if (Engine::chooseUser(user)) 
-				Engine::printBooksList(Engine::recentlyBooks(user));
+			UI::printBooks(Engine::recentlyBooks(user));
 			break;
 		case(3):
-			Engine::getSearchParams(user, sParams);
+			UI::systemMessage(Engine::getSearchParams(user, sParams));
 			while (true)
 			{
 				Engine::printSearchParams(sParams);
@@ -69,7 +57,7 @@ int main()
 					Engine::changeSearchParams(user, sParams);
 				}
 			}
-			Engine::printBooksList(Engine::search(sParams));
+			UI::printBooks(Engine::search(sParams));
 			break;
 			// TODO: create option to look book in more details
 		case(4):

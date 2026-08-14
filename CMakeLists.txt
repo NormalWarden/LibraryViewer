@@ -5,7 +5,7 @@ project(LibraryViewer LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable (LibraryViewer apps/LibraryViewer.cpp src/engine.cpp src/book.cpp)
+add_executable (LibraryViewer apps/LibraryViewer.cpp src/engine.cpp src/book.cpp src/ui.cpp)
 target_include_directories(LibraryViewer PRIVATE include)
 find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)

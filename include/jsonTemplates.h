@@ -4,6 +4,41 @@
 
 namespace JSONTemplates
 {
+	inline constexpr std::string_view startTemplate = R"({
+	"users" : [
+		{
+			"username" : "",
+			"searchParams" : {
+				"author" : "",
+				"language" : [
+				],
+				"title" : "",
+				"year" : 0,
+				"sort" : 0,
+				"resListSize" : 10
+			},
+			"recentlyBooks" : [
+			],
+			"favoriteBooks" : [
+			]
+		}
+	]
+})";
+	inline constexpr std::string_view userTemplate{ R"({"username" : "",
+		"searchParams" : {
+			"author" : "",
+			"language" : [
+			],
+			"title" : "",
+			"year" : 0,
+			"sort" : 0,
+			"resListSize" : 10
+		},
+		"recentlyBooks" : [
+		],
+		"favoriteBooks" : [
+		]
+	})" };
 	inline constexpr std::string_view fullTemplate = R"({
 	"users" : [
 	{
@@ -39,20 +74,4 @@ namespace JSONTemplates
 	}
 	]
 })";
-	inline constexpr std::string_view userTemplate{ R"({"username" : "",
-		"searchParams" : {
-			"author" : "",
-			"language" : [
-				"en"
-			],
-			"title" : "",
-			"year" : 0,
-			"sort" : "0",
-			"resListSize" : 10
-		},
-		"recentlyBooks" : [
-		],
-		"favoriteBooks" : [
-		]
-	})" };
 }
