@@ -11,7 +11,7 @@ namespace UI
 
 	void beforeConnection();
 	void successfulConnection();
-	void failedConnection(long status);
+	void failedConnection(const long status);
 
 	void printOptions();
 	short getUserChoice();
@@ -21,5 +21,19 @@ namespace UI
 
 	void printBooks(const std::vector<Book>& books);
 
-	void systemMessage(Engine::ResponseCode response);
+	void systemMessage(const Engine::ResponseCode response);
+
+	void printSearchParams(const Engine::SearchParams& sParams);
+
+	void changeAuthorSearch(Engine::SearchParams& sParams);
+	void changeLanguageSearch(Engine::SearchParams& sParams);
+	void changeTitleSearch(Engine::SearchParams& sParams);
+	void changeYearSearch(Engine::SearchParams& sParams);
+	void changeSortSearch(Engine::SearchParams& sParams);
+	void changeResListSizeSearch(Engine::SearchParams& sParams);
+	void changeSearchParams(const std::string& username, Engine::SearchParams& sParams);
+
+	Engine::SearchParams specifyingRandomSearchParams();
+
+	std::string getNewUsername();
 }

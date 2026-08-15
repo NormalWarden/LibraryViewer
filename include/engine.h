@@ -27,25 +27,17 @@ namespace Engine
 	struct SearchParams;
 
 	long testConnection();
-	bool createUser(const std::string& username, json& userdata);
-	bool chooseUser(std::string& username);
-	std::vector<std::string> getUsers(const std::string& filename = "userdata.txt");
+	Engine::ResponseCode createUser(const std::string& username);
+	void chooseUser(std::string& username, const short choice);
+	std::vector<std::string_view> getUsers(const std::string& filename = "userdata.txt");
 	std::vector<Book> favoriteBooks(const std::string& username);
 	std::vector<Book> recentlyBooks(const std::string username);
 	std::vector<Book> search(const SearchParams& sParams);
-	Book randomSearch();
-	bool changeSearchParams(const std::string& username, SearchParams& sParams);
+	Book randomSearch(const SearchParams& sParams);
 	ResponseCode getSearchParams(const std::string& username, SearchParams& sParams);
-	void printSearchParams(const SearchParams& sParams);
-	bool saveSearchParams(const std::string& username, const SearchParams& sParams);
-	void changeAuthorSearch(SearchParams& sParams);
-	void changeLanguageSearch(SearchParams& sParams);
-	void changeTitleSearch(SearchParams& sParams);
-	void changeYearSearch(SearchParams& sParams);
-	void changeSortSearch(SearchParams& sParams);
-	void changeResListSizeSearch(SearchParams& sParams);
-	bool addFavoriteBook(const std::string& username, Book book);
-	bool addRecentlyBook(const std::string& username, Book book);
+	ResponseCode saveSearchParams(const std::string& username, const SearchParams& sParams);
+	ResponseCode addFavoriteBook(const std::string& username, Book book);
+	ResponseCode addRecentlyBook(const std::string& username, Book book);
 	json fileToJSON(const std::string& filename = "userdata.txt");
 	bool JSONToFile(const json& userdata, const std::string& filename = "userdata.txt");
 }
@@ -54,7 +46,10 @@ enum class Engine::ResponseCode
 {
 	Ok,
 	EmptyJSON,
-	NoUser
+	NoUser,
+	FailedFileUpdate,
+	EmptyUsername,
+	CreatingIdenticalUser
 };
 
 enum class Engine::Sort

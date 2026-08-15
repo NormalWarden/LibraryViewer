@@ -38,41 +38,33 @@ int main()
 		UI::printOptions();
 		switch (UI::getUserChoice())
 		{
-		case(1):
+		case 1:
 			UI::printBooks(Engine::favoriteBooks(user));
 			break;
-		case(2):
+		case 2:
 			UI::printBooks(Engine::recentlyBooks(user));
 			break;
-		case(3):
+		case 3:
 			UI::systemMessage(Engine::getSearchParams(user, sParams));
-			while (true)
-			{
-				Engine::printSearchParams(sParams);
-				std::cout << "\nDo you want to change the search parameters?\n1. Yes\n2. No\n";
-				std::cin >> choice;
-				std::cout << "\n";
-				if (choice == 1)
-				{
-					Engine::changeSearchParams(user, sParams);
-				}
-			}
+			UI::printSearchParams(sParams);
+			UI::changeSearchParams(user, sParams);
+			UI::systemMessage(Engine::saveSearchParams(user, sParams));
 			UI::printBooks(Engine::search(sParams));
 			break;
 			// TODO: create option to look book in more details
-		case(4):
-			Engine::randomSearch();
+		case 4:
+			Engine::randomSearch(UI::specifyingRandomSearchParams());
 			break;
 			// TODO: create option to look book in more details
-		case(5):
-			Engine::chooseUser(user);
+		case 5:
+			UI::printChosenUser(user);
+			UI::printUsers(Engine::getUsers());
+			Engine::chooseUser(user, UI::getUserChoice());
 			break;
-		case(6):
-			std::cout << "Do you really want to exit ?\n1.Yes\n2.No\n1...2: "; 
-			std::cin >> choice; 
-			if (choice == 1) return 0;
-			break;
+		case 6:
+			Engine::createUser(UI::getNewUsername());
+		case 7:
+			return 0;
 		}
 	}
-	return 0;
 }
