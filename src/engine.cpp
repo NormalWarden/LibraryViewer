@@ -6,9 +6,61 @@ long Engine::testConnection()
 	return r.status_code;
 }
 
-Engine::ResponseCode Engine::createUser(const std::string& username)
+Engine::ResponseCode Engine::fileToJSON(json& userdata)
 {
-	json userdata{ fileToJSON() };
+	std::fstream file(filename);
+	if (!file.is_open())
+	{
+		return ResponseCode::FailedFileOpen;
+	}
+	userdata = json::parse(file);
+	file.close();
+	return ResponseCode::Ok;
+}
+
+Engine::ResponseCode Engine::JSONToFile(const json& userdata)
+{
+	std::fstream file(filename, std::ios::out | std::ios::trunc);
+	if (!file.is_open())
+	{
+		return ResponseCode::FailedFileOpen;
+	}
+	file << userdata.dump(4);
+	if (!file.good())
+	{
+		file.close();
+		return ResponseCode::FailedFileUpdate;
+	}
+	file.close();
+	return ResponseCode::Ok;
+}
+
+Engine::ResponseCode Engine::recreateFile()
+{
+	std::fstream file{ filename };
+	file.open(filename, std::ios::out | std::ios::trunc);
+	if (!file.is_open())
+	{
+		return ResponseCode::FailedFileOpen;
+	}
+	file << JSONTemplates::fullTemplate;
+	if (!file.good())
+	{
+		file.close();
+		return ResponseCode::FailedFileUpdate;
+	}
+	file.close();
+	return ResponseCode::Ok;
+}
+
+Engine::ResponseCode Engine::createUser(std::string_view username)
+{
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
+
 	// Checks
 	if (username.empty())
 	{
@@ -16,7 +68,7 @@ Engine::ResponseCode Engine::createUser(const std::string& username)
 	}
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userdata["users"][i]["username"] == username)
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
 			return ResponseCode::CreatingIdenticalUser;
 		}
@@ -28,13 +80,17 @@ Engine::ResponseCode Engine::createUser(const std::string& username)
 	return JSONToFile(userdata);
 }
 
-Engine::ResponseCode Engine::deleteUser(const std::string& username)
+Engine::ResponseCode Engine::deleteUser(std::string_view username)
 {
-	json userdata{ fileToJSON() };
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
 
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userdata["users"][i]["username"] == username)
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
 			userdata["users"].erase(i);
 			return JSONToFile(userdata);
@@ -43,39 +99,55 @@ Engine::ResponseCode Engine::deleteUser(const std::string& username)
 	return ResponseCode::NoUser;
 }
 
-void Engine::chooseUser(std::string& username, const short choice)
+Engine::ResponseCode Engine::chooseUser(std::string& username, const short choice)
 {
-	json userdata{ fileToJSON() };
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
 
 	if (choice == 1)
+	{
 		username.clear();
+		return ResponseCode::Ok;
+	}
 	else
+	{
 		username = userdata["users"].at(choice)["username"];
+		return ResponseCode::Ok;
+	}
 }
 
-std::vector<std::string_view> Engine::getUsers(const std::string& filename)
+std::vector<std::string_view> Engine::getUsers()
 {
-	json data{ fileToJSON() };
 	std::vector<std::string_view> users;
-	
-	for (int i{}; i < data["users"].size(); ++i)
-		users.push_back(data["users"][i]["username"]);
-	return users;
-}
-
-std::vector<Book> Engine::getFavoriteBooks(const std::string& username)
-{
-	json userdata{ fileToJSON() };
-	std::vector<Book> books;
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return users;
+	}
 
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userdata["users"][i]["username"] == username)
+		users.push_back(userdata["users"][i]["username"]);
+	}
+	return users;
+}
+
+std::vector<Book> Engine::getFavoriteBooks(std::string_view username)
+{
+	std::vector<Book> books;
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return books;
+	}
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
-			if (userdata["users"][i]["favoriteBooks"].empty())
-			{
-				return books;
-			}
 			for (int j{}; j < userdata["users"][i]["favoriteBooks"].size(); ++i)
 			{
 				books.push_back(Book(userdata["users"][i]["favoriteBooks"][j]["author"],
@@ -87,23 +159,65 @@ std::vector<Book> Engine::getFavoriteBooks(const std::string& username)
 			return books;
 		}
 	}
-
-	return std::vector<Book>();
+	return books;
 }
 
-std::vector<Book> Engine::getRecentlyBooks(const std::string username)
+Engine::ResponseCode Engine::addFavoriteBook(std::string_view username, Book book)
 {
-	json userdata{ fileToJSON() };
-	std::vector<Book> books;
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
 
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userdata["users"][i]["username"] == username)
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
-			if (userdata["users"][i]["recentlyBooks"].empty())
-			{
-				return books;
-			}
+			userdata["users"][i]["favoriteBooks"].push_back({
+				{"author", book.getAuthor()},
+				{"language", book.getLanguage()},
+				{"title", book.getTitle()},
+				{"link", book.getLink()},
+				{"year", book.getYear()}});
+			return JSONToFile(userdata);
+		}
+	}
+	return ResponseCode::NoUser;
+}
+
+Engine::ResponseCode Engine::deleteFavoriteBook(std::string_view username, const short bookNumber)
+{
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
+		{
+			userdata["users"][i]["favoriteBooks"].erase(bookNumber);
+			return JSONToFile(userdata);
+		}
+	}
+	return ResponseCode::NoUser;
+}
+
+std::vector<Book> Engine::getRecentlyBooks(std::string_view username)
+{
+	std::vector<Book> books;
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return books;
+	}
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
+		{
 			for (int j{}; j < userdata["users"][i]["recentlyBooks"].size(); ++i)
 			{
 				books.push_back(Book(userdata["users"][i]["recentlyBooks"][j]["author"],
@@ -115,8 +229,50 @@ std::vector<Book> Engine::getRecentlyBooks(const std::string username)
 			return books;
 		}
 	}
+	return books;
+}
 
-	return std::vector<Book>();
+Engine::ResponseCode Engine::addRecentlyBook(std::string_view username, Book book)
+{
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
+		{
+			userdata["users"][i]["recentlyBooks"].push_back({
+				{"author", book.getAuthor()},
+				{"language", book.getLanguage()},
+				{"title", book.getTitle()},
+				{"year", book.getYear()},
+				{"link", book.getLink()}});
+			return JSONToFile(userdata);
+		}
+	}
+	return ResponseCode::NoUser;
+}
+
+Engine::ResponseCode Engine::deleteRecentlyBook(std::string_view username, const short bookNumber)
+{
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
+		{
+			userdata["users"][i]["recentlyBooks"].erase(bookNumber);
+			return JSONToFile(userdata);
+		}
+	}
+	return ResponseCode::NoUser;
 }
 
 std::vector<Book> Engine::search(const SearchParams& sParams)
@@ -133,12 +289,23 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 			}(sParams.title) });
 	}
 	if (sParams.year != 0)
+	{
 		cprParams.Add({ "publish_year", std::to_string(sParams.year) });
-	if (!sParams.author.empty())
-		cprParams.Add({ "author", sParams.author });
+	}
+	if (!sParams.authors.empty())
+	{
+		for (auto author : sParams.authors)
+		{
+			cprParams.Add({ "author", author });
+		}
+	}
 	if (!sParams.langs.empty())
+	{
 		for (auto lang : sParams.langs)
+		{
 			cprParams.Add({ "language", lang });
+		}
+	}
 	if (sParams.sort != Sort::None)
 	{
 		switch (sParams.sort)
@@ -159,20 +326,20 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 	}
 
 	cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"}, cprParams);
-	json j = json::parse(r.text);
+	json response{ json::parse(r.text) };
 	std::vector<Book> books;
-	for (int el{ 0 }; el < sParams.resListSize; ++el)
+	for (int i{}; i < sParams.resListSize; ++i)
 	{
-		books.push_back(Book(j["docs"][el]["author_name"],
-			j["docs"][el]["language"],
-			j["docs"][el]["title"],
-			[](const json& j, const int& iter)->std::string
+		books.push_back(Book(response["docs"][i]["author_name"],
+			response["docs"][i]["language"],
+			response["docs"][i]["title"],
+			[](const json& response, const int& iter)->std::string
 			{
-				std::string link{ "https://openlibrary.org" + j["docs"][iter]["key"].get<std::string>() + "/" + j["docs"][iter]["title"].get<std::string>() };
+				std::string link{ "https://openlibrary.org" + response["docs"][iter]["key"].get<std::string>() + "/" + response["docs"][iter]["title"].get<std::string>() };
 				std::replace(begin(link), end(link), ' ', '_');
 				return link;
-			}(j, el),
-			j["docs"][el]["first_publish_year"]));
+			}(response, i),
+			response["docs"][i]["first_publish_year"]));
 	}
 	return books;
 }
@@ -181,40 +348,51 @@ Book Engine::randomSearch(const SearchParams& sParams)
 {	
 	cpr::Parameters cprParams;
 	if (sParams.year != 0)
-		cprParams.Add({ "publish_year", std::to_string(sParams.year) });
-	if (!sParams.author.empty())
-		cprParams.Add({ "author", sParams.author });
-	if (!sParams.langs.empty())
-		for (auto lang : sParams.langs)
-			cprParams.Add({ "language", lang });
-
-	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" }, cprParams);
-	json j = json::parse(r.text);
-	std::vector<Book> books;
-	for (int el{ 0 }; el < 100; ++el)
 	{
-		books.push_back(Book(j["docs"][el]["author_name"],
-			j["docs"][el]["language"],
-			j["docs"][el]["title"],
-			[](const json& j, const int& iter)->std::string
-			{
-				std::string link{ "https://openlibrary.org" + j["docs"][iter]["key"].get<std::string>() + "/" + j["docs"][iter]["title"].get<std::string>() };
-				std::replace(begin(link), end(link), ' ', '_');
-				return link;
-			}(j, el),
-				j["docs"][el]["first_publish_year"]));
+		cprParams.Add({ "publish_year", std::to_string(sParams.year) });
 	}
+	if (!sParams.authors.empty())
+	{
+		for (auto author : sParams.authors)
+		{
+			cprParams.Add({ "author", author });
+		}
+	}
+	if (!sParams.langs.empty())
+	{
+		for (auto lang : sParams.langs)
+		{
+			cprParams.Add({ "language", lang });
+		}
+	}
+
+	// Search
+	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" }, cprParams);
+	json response{ json::parse(r.text) };
+	
+	// Random number
 	std::random_device rd;
 	std::mt19937 rng{ rd() };
-	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,99 };
-	return books[uid(rng)];
+	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,99 }; // Site search response contains 100 books
+	size_t randNumber{ uid(rng) };
+
+	return Book(response["docs"][randNumber]["author_name"],
+		response["docs"][randNumber]["language"],
+		response["docs"][randNumber]["title"],
+		[](const json& response, const int& iter)->std::string
+		{
+			std::string link{ "https://openlibrary.org" + response["docs"][iter]["key"].get<std::string>() + "/" + response["docs"][iter]["title"].get<std::string>() };
+			std::replace(begin(link), end(link), ' ', '_');
+			return link;
+		}(response, randNumber),
+		response["docs"][randNumber]["first_publish_year"]);
 }
 
-Engine::ResponseCode Engine::getSearchParams(const std::string& username, SearchParams& sParams)
+Engine::ResponseCode Engine::getSearchParams(std::string_view username, SearchParams& sParams)
 {
 	if (username.empty()) // guest
 	{
-		sParams.author = "";
+		sParams.authors = { "" };
 		sParams.langs = { "eng" };
 		sParams.title = "the lord of the rings";
 		sParams.year = 1954;
@@ -223,15 +401,21 @@ Engine::ResponseCode Engine::getSearchParams(const std::string& username, Search
 		return ResponseCode::Ok;
 	}
 
-	json userdata{ Engine::fileToJSON() };
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
 
 	if (userdata.empty())
+	{
 		return ResponseCode::EmptyJSON;
+	}
 	for (int i{}; i < userdata["users"]; ++i)
 	{
-		if (userdata["users"][i]["username"] == username)
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
-			sParams.author = userdata["users"][i]["searchParams"]["author"];
+			sParams.authors = userdata["users"][i]["searchParams"]["author"];
 			sParams.langs = userdata["users"][i]["searchParams"]["language"];
 			sParams.title = userdata["users"][i]["searchParams"]["title"];
 			sParams.year = userdata["users"][i]["searchParams"]["year"];
@@ -239,147 +423,30 @@ Engine::ResponseCode Engine::getSearchParams(const std::string& username, Search
 			sParams.resListSize = userdata["users"][i]["searchParams"]["resListSize"];
 			return ResponseCode::Ok;
 		}
-		return ResponseCode::NoUser;
 	}
+	return ResponseCode::NoUser;
 }
 
-Engine::ResponseCode Engine::saveSearchParams(const std::string& username, const SearchParams& sParams)
+Engine::ResponseCode Engine::saveSearchParams(std::string_view username, const SearchParams& sParams)
 {
-	json userdata{ fileToJSON() };
+	json userdata{};
+	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
+	{
+		return transferRes;
+	}
 
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
-		if (userdata["users"][i]["username"] == username)
+		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
-			userdata["users"][i]["searchParams"]["author"] = sParams.author;
+			userdata["users"][i]["searchParams"]["author"] = sParams.authors;
 			userdata["users"][i]["searchParams"]["language"] = sParams.langs;
 			userdata["users"][i]["searchParams"]["title"] = sParams.title;
 			userdata["users"][i]["searchParams"]["year"] = sParams.year;
 			userdata["users"][i]["searchParams"]["sort"] = sParams.sort;
-			userdata["users"][i]["searchParams"]["resListSize"];
+			userdata["users"][i]["searchParams"]["resListSize"] = sParams.resListSize;
 			return JSONToFile(userdata);
 		}
 	}
 	return ResponseCode::NoUser;
-}
-
-Engine::ResponseCode Engine::addFavoriteBook(const std::string& username, Book book)
-{
-	json userdata{ fileToJSON() };
-
-	for (int i{}; i < userdata["users"].size(); ++i)
-	{
-		if (userdata["users"][i]["username"] == username)
-		{
-			userdata["users"][i]["favoriteBooks"].push_back({
-				{"author", book.getAuthor()},
-				{"language", book.getLanguage()},
-				{"title", book.getTitle()},
-				{"link", book.getLink()},
-				{"year", book.getYear()}				
-				});
-			return JSONToFile(userdata);
-		}
-	}
-
-	return ResponseCode::NoUser;
-}
-
-Engine::ResponseCode Engine::deleteFavoriteBook(const std::string& username, const short bookNumber)
-{
-	json userdata{ fileToJSON() };
-
-	for (int i{}; i < userdata["users"].size(); ++i)
-	{
-		if (userdata["users"][i]["username"] == username)
-		{
-			userdata["users"][i]["favoriteBooks"].erase(bookNumber);
-			return JSONToFile(userdata);
-		}
-	}
-
-	return ResponseCode::NoUser;
-}
-
-Engine::ResponseCode Engine::addRecentlyBook(const std::string& username, Book book)
-{
-	json userdata{ fileToJSON() };
-
-	for (int i{}; i < userdata["users"].size(); ++i)
-	{
-		if (userdata["users"][i]["username"] == username)
-		{
-			userdata["users"][i]["recentlyBooks"].push_back({
-				{"author", book.getAuthor()},
-				{"language", book.getLanguage()},
-				{"title", book.getTitle()},
-				{"year", book.getYear()},
-				{"link", book.getLink()},
-				});
-			return JSONToFile(userdata);
-		}
-	}
-	return ResponseCode::NoUser;
-}
-
-Engine::ResponseCode Engine::deleteRecentlyBook(const std::string& username, const short bookNumber)
-{
-	json userdata{ fileToJSON() };
-
-	for (int i{}; i < userdata["users"].size(); ++i)
-	{
-		if (userdata["users"][i]["username"] == username)
-		{
-			userdata["users"][i]["recentlyBooks"].erase(bookNumber);
-			return JSONToFile(userdata);
-		}
-	}
-	return ResponseCode::NoUser;
-}
-
-json Engine::fileToJSON(const std::string& filename)
-{
-	std::fstream file(filename);
-	if (!file)
-	{
-		file.open(filename, std::ios::out); // create file
-		file.close();
-		file.open(filename);
-	}
-
-	json userdata;
-	userdata = json::parse(file);
-	file.close();
-	return userdata;
-}
-
-Engine::ResponseCode Engine::JSONToFile(const json& userdata, const std::string& filename)
-{
-	std::fstream file(filename, std::ios::out | std::ios::trunc);
-	if (!file.is_open())
-		return ResponseCode::FailedFileUpdate;
-	file << userdata.dump(4);
-	if (!file.good())
-	{
-		file.close();
-		return ResponseCode::FailedFileUpdate;
-	}
-	file.close();
-	return ResponseCode::Ok;
-}
-
-Engine::ResponseCode Engine::recreateFile(const std::string& filename)
-{
-	std::fstream file{ filename };
-	file.open(filename, std::ios::out | std::ios::trunc);
-	if (!file.is_open())
-		return ResponseCode::FailedFileUpdate;
-	file << JSONTemplates::fullTemplate;
-	if (!file.good())
-	{
-		file.close();
-		return ResponseCode::FailedFileUpdate;
-	}
-	file.close();
-	return ResponseCode::Ok;
 }

@@ -3,7 +3,6 @@
 #define USER_NOT_SELECTED 0
 #define USER_SELECTED 1
 
-//#include <iostream>
 #include <fstream>
 #include <vector>
 #include <string> // TODO: replace to string_view
@@ -22,28 +21,34 @@ using json = nlohmann::json;
 
 namespace Engine
 {
+	inline std::string filename{ "userdata.txt" };
 	enum class ResponseCode;
 	enum class Sort;
 	struct SearchParams;
 
 	long testConnection();
-	ResponseCode createUser(const std::string& username);
-	ResponseCode deleteUser(const std::string& username);
-	void chooseUser(std::string& username, const short choice);
-	std::vector<std::string_view> getUsers(const std::string& filename = "userdata.txt");
-	std::vector<Book> getFavoriteBooks(const std::string& username);
-	std::vector<Book> getRecentlyBooks(const std::string username);
+	ResponseCode fileToJSON(json& userdata);
+	ResponseCode JSONToFile(const json& userdata);
+	ResponseCode recreateFile();
+
+	ResponseCode createUser(std::string_view username);
+	ResponseCode deleteUser(std::string_view username);
+	ResponseCode chooseUser(std::string& username, const short choice);
+	std::vector<std::string_view> getUsers();
+
+	std::vector<Book> getFavoriteBooks(std::string_view username);
+	ResponseCode addFavoriteBook(std::string_view username, Book book);
+	ResponseCode deleteFavoriteBook(std::string_view username, const short bookNumber);
+	
+	std::vector<Book> getRecentlyBooks(std::string_view username);
+	ResponseCode addRecentlyBook(std::string_view username, Book book);
+	ResponseCode deleteRecentlyBook(std::string_view username, const short bookNumber);
+
 	std::vector<Book> search(const SearchParams& sParams);
 	Book randomSearch(const SearchParams& sParams);
-	ResponseCode getSearchParams(const std::string& username, SearchParams& sParams);
-	ResponseCode saveSearchParams(const std::string& username, const SearchParams& sParams);
-	ResponseCode addFavoriteBook(const std::string& username, Book book);
-	ResponseCode deleteFavoriteBook(const std::string& username, const short bookNumber);
-	ResponseCode addRecentlyBook(const std::string& username, Book book);
-	ResponseCode deleteRecentlyBook(const std::string& username, const short bookNumber);
-	json fileToJSON(const std::string& filename = "userdata.txt");
-	ResponseCode JSONToFile(const json& userdata, const std::string& filename = "userdata.txt");
-	ResponseCode recreateFile(const std::string& filename = "userdata.txt");
+
+	ResponseCode getSearchParams(std::string_view username, SearchParams& sParams);
+	ResponseCode saveSearchParams(std::string_view username, const SearchParams& sParams);
 }
 
 enum class Engine::ResponseCode
@@ -52,6 +57,7 @@ enum class Engine::ResponseCode
 	EmptyJSON,
 	NoUser,
 	FailedFileUpdate,
+	FailedFileOpen,
 	EmptyUsername,
 	CreatingIdenticalUser
 };
@@ -67,7 +73,7 @@ enum class Engine::Sort
 
 struct Engine::SearchParams
 {
-	std::string author;
+	std::vector<std::string> authors;
 	std::vector<std::string> langs;
 	std::string title;
 	size_t year{};

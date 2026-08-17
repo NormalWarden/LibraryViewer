@@ -16,7 +16,6 @@ int main()
 	json j = json::parse(r.text);*/
 	//std::cout << j["docs"][0].dump(4);
 
-
 	UI::printTestConnectionRes(Engine::testConnection());
 	
 	std::string user;

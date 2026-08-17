@@ -13,7 +13,7 @@ void UI::printOptions()
 		<< "4. Search randomly\n"
 		<< "5. Choose user\n"
 		<< "6. Create user\n"
-		<< "7. Special options"
+		<< "7. Special options\n"
 		<< "8. Exit\n"
 		<< "1...8: ";
 }
@@ -105,7 +105,14 @@ void UI::systemMessage(const Engine::ResponseCode response)
 void UI::printSearchParams(const Engine::SearchParams& sParams)
 {
 	std::cout << "Search params:"
-		<< "\nAuthor: " << (sParams.author.empty() ? "any" : sParams.author)
+		<< "\nAuthor: " << (sParams.authors.empty() ? "any" : 
+			[](const std::vector<std::string>& authors)->std::string
+			{
+				std::string authorsStr;
+				for (auto author : authors)
+					authorsStr = authorsStr + " " + author;
+				return authorsStr;
+			}(sParams.authors))
 		<< "\nLanguage: " << (sParams.langs.empty() ? "any" :
 			[](const std::vector<std::string>& langs)->std::string
 			{
@@ -140,8 +147,10 @@ void UI::printSearchParams(const Engine::SearchParams& sParams)
 
 void UI::changeAuthorSearch(Engine::SearchParams& sParams)
 {
+	std::string newAuthor;
 	std::cout << "\nEnter the author or leave the field blank to search any author: ";
-	std::cin >> sParams.author;
+	std::cin >> newAuthor;
+	sParams.authors.push_back(newAuthor);
 	std::cout << "\n";
 }
 
@@ -272,7 +281,7 @@ Engine::SearchParams UI::specifyingRandomSearchParams()
 			case 1:
 				std::cout << "\nEnter the author name: ";
 				std::cin >> input;
-				sParams.author = input;
+				sParams.authors.push_back(input);
 				break;
 			case 2:
 				std::cout << "\nEnter the name of language: ";
