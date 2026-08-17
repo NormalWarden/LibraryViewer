@@ -9,11 +9,8 @@ namespace UI
 {
 	void firstMessage();
 
-	void beforeConnection();
-	void successfulConnection();
-	void failedConnection(const long status);
-
 	void printOptions();
+	void printSpecialOptions();
 	short getUserChoice();
 
 	void printChosenUser(std::string_view username);
@@ -36,4 +33,6 @@ namespace UI
 	Engine::SearchParams specifyingRandomSearchParams();
 
 	std::string getNewUsername();
+
+	void printTestConnectionRes(const long status);
 }

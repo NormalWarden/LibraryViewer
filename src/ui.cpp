@@ -5,21 +5,6 @@ void UI::firstMessage()
 	std::cout << "---LibraryViewer---\n";
 }
 
-void UI::beforeConnection()
-{
-	std::cout << "Trying to connect to https://openlibrary.org/...\n";
-}
-
-void UI::successfulConnection()
-{
-	std::cout << "Connection successfull\n";
-}
-
-void UI::failedConnection(const long status)
-{
-	std::cout << "Failed to connect to https://openlibrary.org/. Error: " << status << "\n";
-}
-
 void UI::printOptions()
 {
 	std::cout << "1. Open list of my books\n"
@@ -28,14 +13,25 @@ void UI::printOptions()
 		<< "4. Search randomly\n"
 		<< "5. Choose user\n"
 		<< "6. Create user\n"
-		<< "7. Exit\n"
-		<< "1...7: ";
+		<< "7. Special options"
+		<< "8. Exit\n"
+		<< "1...8: ";
+}
+
+void UI::printSpecialOptions()
+{
+	std::cout << "1. Recreate the file with user data\n"
+		<< "2. Delete the user\n"
+		<< "3. Unfavorite a book\n"
+		<< "4. Test connection to the site\n"
+		<< "5. Nothing\n";
 }
 
 short UI::getUserChoice()
 {
 	short choice{};
 	std::cin >> choice;
+	std::cout << "\n";
 	return choice;
 }
 
@@ -101,7 +97,7 @@ void UI::systemMessage(const Engine::ResponseCode response)
 		std::cout << "User not created: failed to create user without name\n";
 		return;
 	case Engine::ResponseCode::CreatingIdenticalUser:
-		std::cout << "\nUser not created: a user with that name already exists";
+		std::cout << "User not created: a user with that name already exists\n";
 		return;
 	}
 }
@@ -305,4 +301,13 @@ std::string UI::getNewUsername()
 	std::cin >> username;
 	std::cout << "\n";
 	return username;
+}
+
+void UI::printTestConnectionRes(const long status)
+{
+	std::cout << "Trying to connect to https://openlibrary.org/...\n";
+	if (status == 200)
+		std::cout << "Connection successfull\n";
+	else
+		std::cout << "Failed to connect to https://openlibrary.org/. Error: " << status << "\n";
 }

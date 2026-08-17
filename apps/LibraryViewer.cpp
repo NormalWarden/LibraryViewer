@@ -11,38 +11,26 @@ using json = nlohmann::json;
 int main()
 {
 	UI::firstMessage();
-	UI::beforeConnection();
 	/*cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
 		cpr::Parameters{ {"q", "the+lord+of+the+rings"} });
 	json j = json::parse(r.text);*/
 	//std::cout << j["docs"][0].dump(4);
 
 
-	{
-		long r = Engine::testConnection();
-		if (r != 200)
-		{
-			UI::failedConnection(r);
-			return 1;
-		}
-	}
+	UI::printTestConnectionRes(Engine::testConnection());
 	
-	UI::successfulConnection();
-	
-	char choice{};
 	std::string user;
 	Engine::SearchParams sParams;
-	std::vector<Book> books;
 	while (true)
 	{
 		UI::printOptions();
 		switch (UI::getUserChoice())
 		{
 		case 1:
-			UI::printBooks(Engine::favoriteBooks(user));
+			UI::printBooks(Engine::getFavoriteBooks(user));
 			break;
 		case 2:
-			UI::printBooks(Engine::recentlyBooks(user));
+			UI::printBooks(Engine::getRecentlyBooks(user));
 			break;
 		case 3:
 			UI::systemMessage(Engine::getSearchParams(user, sParams));
@@ -64,6 +52,26 @@ int main()
 		case 6:
 			Engine::createUser(UI::getNewUsername());
 		case 7:
+			UI::printSpecialOptions();
+			switch (UI::getUserChoice())
+			{
+			case 1:
+				Engine::recreateFile();
+				break;
+			case 2:
+				Engine::deleteUser(user);
+				break;
+			case 3:
+				UI::printBooks(Engine::getFavoriteBooks(user));
+				Engine::deleteFavoriteBook(user, UI::getUserChoice());
+				break;
+			case 4:
+				UI::printTestConnectionRes(Engine::testConnection());
+				break;
+			case 5:
+				break;
+			}
+		case 8:
 			return 0;
 		}
 	}

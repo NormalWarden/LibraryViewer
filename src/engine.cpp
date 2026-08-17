@@ -25,10 +25,22 @@ Engine::ResponseCode Engine::createUser(const std::string& username)
 	// Saving
 	userdata["users"].push_back(json::parse(JSONTemplates::userTemplate));
 	userdata["users"].back()["username"] = username;
-	if (JSONToFile(userdata))
-		return ResponseCode::Ok;
-	else
-		return ResponseCode::FailedFileUpdate;
+	return JSONToFile(userdata);
+}
+
+Engine::ResponseCode Engine::deleteUser(const std::string& username)
+{
+	json userdata{ fileToJSON() };
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"] == username)
+		{
+			userdata["users"].erase(i);
+			return JSONToFile(userdata);
+		}
+	}
+	return ResponseCode::NoUser;
 }
 
 void Engine::chooseUser(std::string& username, const short choice)
@@ -51,7 +63,7 @@ std::vector<std::string_view> Engine::getUsers(const std::string& filename)
 	return users;
 }
 
-std::vector<Book> Engine::favoriteBooks(const std::string& username)
+std::vector<Book> Engine::getFavoriteBooks(const std::string& username)
 {
 	json userdata{ fileToJSON() };
 	std::vector<Book> books;
@@ -79,7 +91,7 @@ std::vector<Book> Engine::favoriteBooks(const std::string& username)
 	return std::vector<Book>();
 }
 
-std::vector<Book> Engine::recentlyBooks(const std::string username)
+std::vector<Book> Engine::getRecentlyBooks(const std::string username)
 {
 	json userdata{ fileToJSON() };
 	std::vector<Book> books;
@@ -245,15 +257,10 @@ Engine::ResponseCode Engine::saveSearchParams(const std::string& username, const
 			userdata["users"][i]["searchParams"]["year"] = sParams.year;
 			userdata["users"][i]["searchParams"]["sort"] = sParams.sort;
 			userdata["users"][i]["searchParams"]["resListSize"];
-			break;
+			return JSONToFile(userdata);
 		}
-		return ResponseCode::NoUser;
 	}
-
-	if (JSONToFile(userdata))
-		return ResponseCode::Ok;
-	else
-		return ResponseCode::FailedFileUpdate;
+	return ResponseCode::NoUser;
 }
 
 Engine::ResponseCode Engine::addFavoriteBook(const std::string& username, Book book)
@@ -271,14 +278,27 @@ Engine::ResponseCode Engine::addFavoriteBook(const std::string& username, Book b
 				{"link", book.getLink()},
 				{"year", book.getYear()}				
 				});
-			break;
+			return JSONToFile(userdata);
 		}
 	}
 
-	if (JSONToFile(userdata))
-		return ResponseCode::Ok;
-	else
-		return ResponseCode::FailedFileUpdate;
+	return ResponseCode::NoUser;
+}
+
+Engine::ResponseCode Engine::deleteFavoriteBook(const std::string& username, const short bookNumber)
+{
+	json userdata{ fileToJSON() };
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"] == username)
+		{
+			userdata["users"][i]["favoriteBooks"].erase(bookNumber);
+			return JSONToFile(userdata);
+		}
+	}
+
+	return ResponseCode::NoUser;
 }
 
 Engine::ResponseCode Engine::addRecentlyBook(const std::string& username, Book book)
@@ -296,14 +316,25 @@ Engine::ResponseCode Engine::addRecentlyBook(const std::string& username, Book b
 				{"year", book.getYear()},
 				{"link", book.getLink()},
 				});
-			break;
+			return JSONToFile(userdata);
 		}
 	}
+	return ResponseCode::NoUser;
+}
 
-	if (JSONToFile(userdata))
-		return ResponseCode::Ok;
-	else
-		return ResponseCode::FailedFileUpdate;
+Engine::ResponseCode Engine::deleteRecentlyBook(const std::string& username, const short bookNumber)
+{
+	json userdata{ fileToJSON() };
+
+	for (int i{}; i < userdata["users"].size(); ++i)
+	{
+		if (userdata["users"][i]["username"] == username)
+		{
+			userdata["users"][i]["recentlyBooks"].erase(bookNumber);
+			return JSONToFile(userdata);
+		}
+	}
+	return ResponseCode::NoUser;
 }
 
 json Engine::fileToJSON(const std::string& filename)
@@ -317,43 +348,38 @@ json Engine::fileToJSON(const std::string& filename)
 	}
 
 	json userdata;
-	try
-	{
-		userdata = json::parse(file);
-	}
-	catch (...)
-	{
-		int choice{};
-		std::cout << "\nUser data is broken. Would you correct it?\n1. Yes\n2. No\n1...2: ";
-		std::cin >> choice;
-		if (choice == 1)
-		{
-			file.close();
-			file.open(filename, std::ios::out | std::ios::trunc);
-			file << JSONTemplates::fullTemplate;
-			userdata = json::parse(JSONTemplates::fullTemplate);
-		}
-		else
-		{
-			std::cout << "\nBad transfer info from file to json format";
-			return json();
-		}
-	}
+	userdata = json::parse(file);
 	file.close();
 	return userdata;
 }
 
-bool Engine::JSONToFile(const json& userdata, const std::string& filename)
+Engine::ResponseCode Engine::JSONToFile(const json& userdata, const std::string& filename)
 {
 	std::fstream file(filename, std::ios::out | std::ios::trunc);
 	if (!file.is_open())
-		return false;
+		return ResponseCode::FailedFileUpdate;
 	file << userdata.dump(4);
 	if (!file.good())
 	{
 		file.close();
-		return false;
+		return ResponseCode::FailedFileUpdate;
 	}
 	file.close();
-	return true;
+	return ResponseCode::Ok;
+}
+
+Engine::ResponseCode Engine::recreateFile(const std::string& filename)
+{
+	std::fstream file{ filename };
+	file.open(filename, std::ios::out | std::ios::trunc);
+	if (!file.is_open())
+		return ResponseCode::FailedFileUpdate;
+	file << JSONTemplates::fullTemplate;
+	if (!file.good())
+	{
+		file.close();
+		return ResponseCode::FailedFileUpdate;
+	}
+	file.close();
+	return ResponseCode::Ok;
 }

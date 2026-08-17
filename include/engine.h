@@ -3,7 +3,7 @@
 #define USER_NOT_SELECTED 0
 #define USER_SELECTED 1
 
-#include <iostream>
+//#include <iostream>
 #include <fstream>
 #include <vector>
 #include <string> // TODO: replace to string_view
@@ -27,19 +27,23 @@ namespace Engine
 	struct SearchParams;
 
 	long testConnection();
-	Engine::ResponseCode createUser(const std::string& username);
+	ResponseCode createUser(const std::string& username);
+	ResponseCode deleteUser(const std::string& username);
 	void chooseUser(std::string& username, const short choice);
 	std::vector<std::string_view> getUsers(const std::string& filename = "userdata.txt");
-	std::vector<Book> favoriteBooks(const std::string& username);
-	std::vector<Book> recentlyBooks(const std::string username);
+	std::vector<Book> getFavoriteBooks(const std::string& username);
+	std::vector<Book> getRecentlyBooks(const std::string username);
 	std::vector<Book> search(const SearchParams& sParams);
 	Book randomSearch(const SearchParams& sParams);
 	ResponseCode getSearchParams(const std::string& username, SearchParams& sParams);
 	ResponseCode saveSearchParams(const std::string& username, const SearchParams& sParams);
 	ResponseCode addFavoriteBook(const std::string& username, Book book);
+	ResponseCode deleteFavoriteBook(const std::string& username, const short bookNumber);
 	ResponseCode addRecentlyBook(const std::string& username, Book book);
+	ResponseCode deleteRecentlyBook(const std::string& username, const short bookNumber);
 	json fileToJSON(const std::string& filename = "userdata.txt");
-	bool JSONToFile(const json& userdata, const std::string& filename = "userdata.txt");
+	ResponseCode JSONToFile(const json& userdata, const std::string& filename = "userdata.txt");
+	ResponseCode recreateFile(const std::string& filename = "userdata.txt");
 }
 
 enum class Engine::ResponseCode
