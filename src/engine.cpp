@@ -37,8 +37,7 @@ Engine::ResponseCode Engine::JSONToFile(const json& userdata)
 
 Engine::ResponseCode Engine::recreateFile()
 {
-	std::fstream file{ filename };
-	file.open(filename, std::ios::out | std::ios::trunc);
+	std::fstream file{ filename, std::ios::out | std::ios::trunc };
 	if (!file.is_open())
 	{
 		return ResponseCode::FailedFileOpen;
@@ -53,15 +52,15 @@ Engine::ResponseCode Engine::recreateFile()
 	return ResponseCode::Ok;
 }
 
-Engine::ResponseCode Engine::createUser(std::string_view username)
+Engine::ResponseCode Engine::createUser(std::string& username)
 {
 	json userdata{};
 	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
 	{
+		username.clear();
 		return transferRes;
 	}
 
-	// Checks
 	if (username.empty())
 	{
 		return ResponseCode::EmptyUsername;
@@ -70,17 +69,17 @@ Engine::ResponseCode Engine::createUser(std::string_view username)
 	{
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
+			username.clear();
 			return ResponseCode::CreatingIdenticalUser;
 		}
 	}
 
-	// Saving
 	userdata["users"].push_back(json::parse(JSONTemplates::userTemplate));
 	userdata["users"].back()["username"] = username;
 	return JSONToFile(userdata);
 }
 
-Engine::ResponseCode Engine::deleteUser(std::string_view username)
+Engine::ResponseCode Engine::deleteUser(std::string& username)
 {
 	json userdata{};
 	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
@@ -88,14 +87,20 @@ Engine::ResponseCode Engine::deleteUser(std::string_view username)
 		return transferRes;
 	}
 
+	if (username.empty())
+	{
+		return ResponseCode::EmptyUsername;
+	}
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
 			userdata["users"].erase(i);
+			username.clear();
 			return JSONToFile(userdata);
 		}
 	}
+	username.clear();
 	return ResponseCode::NoUser;
 }
 

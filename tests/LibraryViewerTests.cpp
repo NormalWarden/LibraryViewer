@@ -4,6 +4,19 @@
 #include <string>
 #include "book.h"
 #include "engine.h"
+#include "jsonTemplates.h"
+
+std::string fileToString()
+{
+	std::string filedata, fileline;
+	std::fstream file{ Engine::filename };
+	while (std::getline(file, fileline))
+	{
+		filedata += fileline;
+	}
+	file.close();
+	return filedata;
+}
 
 TEST(BookTest, VerifyGettersAfterFullInit)
 {
@@ -57,4 +70,110 @@ TEST(BookTest, VerifyOperatorAssignment)
 TEST(EngineTest, TestConnection)
 {
 	ASSERT_EQ(Engine::testConnection(), 200);
+}
+
+TEST(EngineTest, RecreateFile_Ok)
+{
+	Engine::filename = "test.txt";
+
+	ASSERT_EQ(Engine::recreateFile(), Engine::ResponseCode::Ok);
+	ASSERT_EQ(fileToString, JSONTemplates::fullTemplate);
+}
+
+TEST(EngineTest, RecreateFile_FailedFileOpen)
+{
+	Engine::filename = "test/test.txt";
+	// fstream with ios::out modifier can't create a folder but only a file
+	ASSERT_EQ(Engine::recreateFile(), Engine::ResponseCode::FailedFileOpen);
+}
+
+TEST(EngineTest, FileToJSON_Ok)
+{
+	Engine::filename = "test.txt";
+	json userdata;
+
+	ASSERT_EQ(Engine::fileToJSON(userdata), Engine::ResponseCode::Ok);
+	ASSERT_EQ(fileToString(), userdata.dump(4));
+}
+
+TEST(EngineTest, FileToJSON_FailedFileOpen)
+{
+	Engine::filename = "test/test.txt";
+	json userdata;
+	// fstream with ios::out modifier can't create a folder but only a file
+	ASSERT_EQ(Engine::fileToJSON(userdata), Engine::ResponseCode::FailedFileOpen);
+}
+
+TEST(EngineTest, JSONToFile_Ok)
+{
+	Engine::filename = "test.txt";
+	json userdata{ JSONTemplates::fullTemplate };
+
+	ASSERT_EQ(Engine::JSONToFile(userdata), Engine::ResponseCode::Ok);
+	ASSERT_EQ(fileToString(), userdata.dump(4));
+}
+
+TEST(EngineTest, JSONToFile_FailedFileOpen)
+{
+	Engine::filename = "test/test.txt";
+	json userdata{ JSONTemplates::fullTemplate };
+	// fstream with ios::out modifier can't create a folder but only a file
+	ASSERT_EQ(Engine::JSONToFile(userdata), Engine::ResponseCode::FailedFileOpen);
+}
+
+TEST(EngineTest, GetUsers_Success)
+{
+	Engine::filename = "test.txt";
+	ASSERT_EQ(Engine::getUsers().size(), 1);
+}
+
+TEST(EngineTest, GetUsers_FailedOpenFile)
+{
+	Engine::filename = "test/test.txt";
+	ASSERT_EQ(Engine::getUsers().size(), 0);
+}
+
+TEST(EngineTest, CreateUser_Ok)
+{
+	Engine::filename = "test.txt";
+	std::string username = "new";
+	ASSERT_EQ(Engine::createUser(username), Engine::ResponseCode::Ok);
+}
+
+TEST(EngineTest, CreateUser_CreatingIdenticalUser)
+{
+	Engine::filename = "test.txt";
+	std::string username = "new";
+	ASSERT_EQ(Engine::createUser(username), Engine::ResponseCode::CreatingIdenticalUser);
+	ASSERT_EQ(username, "");
+}
+
+TEST(EngineTest, CreateUser_EmptyUsername)
+{
+	Engine::filename = "test.txt";
+	std::string username = "";
+	ASSERT_EQ(Engine::createUser(username), Engine::ResponseCode::EmptyUsername);
+}
+
+TEST(EngineTest, DeleteUser_Ok)
+{
+	Engine::filename = "test.txt";
+	std::string username = "new";
+	ASSERT_EQ(Engine::deleteUser(username), Engine::ResponseCode::Ok);
+	ASSERT_EQ(username, "");
+}
+
+TEST(EngineTest, DeleteUser_NoUser)
+{
+	Engine::filename = "test.txt";
+	std::string username = "new";
+	ASSERT_EQ(Engine::deleteUser(username), Engine::ResponseCode::NoUser);
+	ASSERT_EQ(username, "");
+}
+
+TEST(EngineTest, DeleteUser_EmptyUsername)
+{
+	Engine::filename = "test.txt";
+	std::string username = "";
+	ASSERT_EQ(Engine::deleteUser(username), Engine::ResponseCode::EmptyUsername);
 }

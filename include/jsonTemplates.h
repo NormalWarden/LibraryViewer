@@ -46,7 +46,7 @@ namespace JSONTemplates
 		"searchParams" : {
 			"author" : "",
 			"language" : [
-				"en"
+				"eng"
 			],
 			"title" : "The lord of the rings",
 			"year" : 0,

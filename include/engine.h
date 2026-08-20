@@ -31,8 +31,8 @@ namespace Engine
 	ResponseCode JSONToFile(const json& userdata);
 	ResponseCode recreateFile();
 
-	ResponseCode createUser(std::string_view username);
-	ResponseCode deleteUser(std::string_view username);
+	ResponseCode createUser(std::string& username);
+	ResponseCode deleteUser(std::string& username);
 	ResponseCode chooseUser(std::string& username, const short choice);
 	std::vector<std::string_view> getUsers();
 

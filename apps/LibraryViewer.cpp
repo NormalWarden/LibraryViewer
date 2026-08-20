@@ -25,13 +25,13 @@ int main()
 		UI::printOptions();
 		switch (UI::getUserChoice())
 		{
-		case 1:
+		case 1: // Open list of my books
 			UI::printBooks(Engine::getFavoriteBooks(user));
 			break;
-		case 2:
+		case 2: // Look recently looked books
 			UI::printBooks(Engine::getRecentlyBooks(user));
 			break;
-		case 3:
+		case 3: // Search
 			UI::systemMessage(Engine::getSearchParams(user, sParams));
 			UI::printSearchParams(sParams);
 			UI::changeSearchParams(user, sParams);
@@ -39,38 +39,39 @@ int main()
 			UI::printBooks(Engine::search(sParams));
 			break;
 			// TODO: create option to look book in more details
-		case 4:
+		case 4: // Search randomly
 			Engine::randomSearch(UI::specifyingRandomSearchParams());
 			break;
 			// TODO: create option to look book in more details
-		case 5:
+		case 5: // Choose user
 			UI::printChosenUser(user);
 			UI::printUsers(Engine::getUsers());
-			Engine::chooseUser(user, UI::getUserChoice());
+			UI::systemMessage(Engine::chooseUser(user, UI::getUserChoice()));
 			break;
-		case 6:
-			Engine::createUser(UI::getNewUsername());
-		case 7:
+		case 6: // Create user
+			user = UI::getNewUsername();
+			UI::systemMessage(Engine::createUser(user));
+		case 7: // Special options
 			UI::printSpecialOptions();
 			switch (UI::getUserChoice())
 			{
-			case 1:
-				Engine::recreateFile();
+			case 1: // Recreate the file with user data
+				UI::systemMessage(Engine::recreateFile());
 				break;
-			case 2:
-				Engine::deleteUser(user);
+			case 2: // Delete the user
+				UI::systemMessage(Engine::deleteUser(user));
 				break;
-			case 3:
+			case 3: // Unfavorite a book
 				UI::printBooks(Engine::getFavoriteBooks(user));
-				Engine::deleteFavoriteBook(user, UI::getUserChoice());
+				UI::systemMessage(Engine::deleteFavoriteBook(user, UI::getUserChoice()));
 				break;
-			case 4:
+			case 4: // Test connection to the site
 				UI::printTestConnectionRes(Engine::testConnection());
 				break;
-			case 5:
+			case 5: // Nothing
 				break;
 			}
-		case 8:
+		case 8: // Exit
 			return 0;
 		}
 	}
