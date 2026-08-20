@@ -35,6 +35,15 @@ short UI::getUserChoice()
 	return choice;
 }
 
+std::string UI::getNewUsername()
+{
+	std::string username;
+	std::cout << "Enter the new user name: ";
+	std::cin >> username;
+	std::cout << "\n";
+	return username;
+}
+
 void UI::printChosenUser(std::string_view username)
 {
 	std::cout << "Now chosen ";
@@ -100,49 +109,6 @@ void UI::systemMessage(const Engine::ResponseCode response)
 		std::cout << "User not created: a user with that name already exists\n";
 		return;
 	}
-}
-
-void UI::printSearchParams(const Engine::SearchParams& sParams)
-{
-	std::cout << "Search params:"
-		<< "\nAuthor: " << (sParams.authors.empty() ? "any" : 
-			[](const std::vector<std::string>& authors)->std::string
-			{
-				std::string authorsStr;
-				for (auto author : authors)
-					authorsStr = authorsStr + " " + author;
-				return authorsStr;
-			}(sParams.authors))
-		<< "\nLanguage: " << (sParams.langs.empty() ? "any" :
-			[](const std::vector<std::string>& langs)->std::string
-			{
-				std::string langsStr;
-				for (auto lang : langs)
-					langsStr = langsStr + " " + lang;
-				return langsStr;
-			}(sParams.langs))
-		<< "\nTitle: " << (sParams.title.empty() ? "any" : sParams.title)
-		<< "\nYear: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
-		<< "\nSort mode: " <<
-		[](const Engine::Sort& sort)->std::string
-		{
-			switch (sort)
-			{
-			case Engine::Sort::None:
-				return "relevant";
-			case Engine::Sort::Editions:
-				return "count of editions";
-			case Engine::Sort::Old:
-				return "old";
-			case Engine::Sort::New:
-				return "new";
-			case Engine::Sort::Rating:
-				return "rating";
-			default:
-				return "relevant";
-			}
-		}(sParams.sort)
-			<< "\nSearch results list size: " << sParams.resListSize << "\n";
 }
 
 void UI::changeAuthorSearch(Engine::SearchParams& sParams)
@@ -263,6 +229,49 @@ void UI::changeSearchParams(const std::string& username, Engine::SearchParams& s
 	}
 }
 
+void UI::printSearchParams(const Engine::SearchParams& sParams)
+{
+	std::cout << "Search params:"
+		<< "\nAuthor: " << (sParams.authors.empty() ? "any" :
+			[](const std::vector<std::string>& authors)->std::string
+			{
+				std::string authorsStr;
+				for (auto author : authors)
+					authorsStr = authorsStr + " " + author;
+				return authorsStr;
+			}(sParams.authors))
+		<< "\nLanguage: " << (sParams.langs.empty() ? "any" :
+			[](const std::vector<std::string>& langs)->std::string
+			{
+				std::string langsStr;
+				for (auto lang : langs)
+					langsStr = langsStr + " " + lang;
+				return langsStr;
+			}(sParams.langs))
+		<< "\nTitle: " << (sParams.title.empty() ? "any" : sParams.title)
+		<< "\nYear: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
+		<< "\nSort mode: " <<
+		[](const Engine::Sort& sort)->std::string
+		{
+			switch (sort)
+			{
+			case Engine::Sort::None:
+				return "relevant";
+			case Engine::Sort::Editions:
+				return "count of editions";
+			case Engine::Sort::Old:
+				return "old";
+			case Engine::Sort::New:
+				return "new";
+			case Engine::Sort::Rating:
+				return "rating";
+			default:
+				return "relevant";
+			}
+		}(sParams.sort)
+			<< "\nSearch results list size: " << sParams.resListSize << "\n";
+}
+
 Engine::SearchParams UI::specifyingRandomSearchParams()
 {
 	Engine::SearchParams sParams;
@@ -301,15 +310,6 @@ Engine::SearchParams UI::specifyingRandomSearchParams()
 		else
 			return sParams;
 	}
-}
-
-std::string UI::getNewUsername()
-{
-	std::string username;
-	std::cout << "Enter the new user name: ";
-	std::cin >> username;
-	std::cout << "\n";
-	return username;
 }
 
 void UI::printTestConnectionRes(const long status)
