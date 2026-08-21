@@ -9,7 +9,8 @@ namespace JSONTemplates
 		{
 			"username" : "",
 			"searchParams" : {
-				"author" : "",
+				"author" : [
+				],
 				"language" : [
 				],
 				"title" : "",
@@ -26,7 +27,8 @@ namespace JSONTemplates
 })";
 	inline constexpr std::string_view userTemplate{ R"({"username" : "",
 		"searchParams" : {
-			"author" : "",
+			"author" : [
+			],
 			"language" : [
 			],
 			"title" : "",
@@ -42,32 +44,41 @@ namespace JSONTemplates
 	inline constexpr std::string_view fullTemplate = R"({
 	"users" : [
 	{
-		"username" : "name",
+		"username" : "	",
 		"searchParams" : {
-			"author" : "",
+			"author" : [
+			],
 			"language" : [
-				"eng"
+				"en"
 			],
 			"title" : "The lord of the rings",
 			"year" : 0,
-			"sort" : "0",
+			"sort" : 0,
 			"resListSize" : 10
 		},
 		"recentlyBooks" : [
 			{
-				"author" : "J.R.R. Tolkien",
+				"author" : [
+					"J.R.R. Tolkien"
+				],
+				"language" : [
+					"en"
+				],
 				"title" : "The Lord of the Rings",
-				"language" : "en",
-				"firstPublishYear" : 1954,
+				"year" : 1954,
 				"link" : "https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings"
 			}
 		],
 		"favoriteBooks" : [
 			{
-				"author" : "J.R.R. Tolkien",
+				"author" : [
+					"J.R.R. Tolkien"
+				],
+				"language" : [
+					"en"
+				],
 				"title" : "The Lord of the Rings",
-				"language" : "en",
-				"firstPublishYear" : 1954,
+				"year" : 1954,
 				"link" : "https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings"
 			}
 		]

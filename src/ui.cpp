@@ -97,7 +97,7 @@ void UI::systemMessage(const Engine::ResponseCode response)
 		std::cout << "Failed to get infotmation from file with user data\n";
 		return;
 	case Engine::ResponseCode::NoUser:
-		std::cout << "Can't find account with that name\n";
+		std::cout << "Failed to find account with that name\n";
 		return;
 	case Engine::ResponseCode::FailedFileUpdate:
 		std::cout << "Failed to update user data in file\n";
@@ -107,6 +107,12 @@ void UI::systemMessage(const Engine::ResponseCode response)
 		return;
 	case Engine::ResponseCode::CreatingIdenticalUser:
 		std::cout << "User not created: a user with that name already exists\n";
+		return;
+	case Engine::ResponseCode::InvalidInput:
+		std::cout << "Invalid input\n";
+		return;
+	case Engine::ResponseCode::GuestFavoriteBook:
+		std::cout << "Guests are not allowed to add, delete or have their own favorite books\n";
 		return;
 	}
 }

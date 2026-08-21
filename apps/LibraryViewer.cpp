@@ -46,7 +46,7 @@ int main()
 		case 5: // Choose user
 			UI::printChosenUser(user);
 			UI::printUsers(Engine::getUsers());
-			UI::systemMessage(Engine::chooseUser(user, UI::getUserChoice()));
+			UI::systemMessage(Engine::chooseUser(user, UI::getUserChoice() - 1));
 			break;
 		case 6: // Create user
 			user = UI::getNewUsername();
@@ -63,7 +63,7 @@ int main()
 				break;
 			case 3: // Unfavorite a book
 				UI::printBooks(Engine::getFavoriteBooks(user));
-				UI::systemMessage(Engine::deleteFavoriteBook(user, UI::getUserChoice()));
+				UI::systemMessage(Engine::deleteFavoriteBook(user, UI::getUserChoice() - 1));
 				break;
 			case 4: // Test connection to the site
 				UI::printTestConnectionRes(Engine::testConnection());

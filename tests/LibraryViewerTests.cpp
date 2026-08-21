@@ -72,6 +72,7 @@ TEST(EngineTest, TestConnection)
 	ASSERT_EQ(Engine::testConnection(), 200);
 }
 
+
 TEST(EngineTest, RecreateFile_Ok)
 {
 	Engine::filename = "test.txt";
@@ -86,6 +87,7 @@ TEST(EngineTest, RecreateFile_FailedFileOpen)
 	// fstream with ios::out modifier can't create a folder but only a file
 	ASSERT_EQ(Engine::recreateFile(), Engine::ResponseCode::FailedFileOpen);
 }
+
 
 TEST(EngineTest, FileToJSON_Ok)
 {
@@ -104,10 +106,11 @@ TEST(EngineTest, FileToJSON_FailedFileOpen)
 	ASSERT_EQ(Engine::fileToJSON(userdata), Engine::ResponseCode::FailedFileOpen);
 }
 
+
 TEST(EngineTest, JSONToFile_Ok)
 {
 	Engine::filename = "test.txt";
-	json userdata{ JSONTemplates::fullTemplate };
+	json userdata{ JSONTemplates::startTemplate };
 
 	ASSERT_EQ(Engine::JSONToFile(userdata), Engine::ResponseCode::Ok);
 	ASSERT_EQ(fileToString(), userdata.dump(4));
@@ -116,15 +119,18 @@ TEST(EngineTest, JSONToFile_Ok)
 TEST(EngineTest, JSONToFile_FailedFileOpen)
 {
 	Engine::filename = "test/test.txt";
-	json userdata{ JSONTemplates::fullTemplate };
+	json userdata{ JSONTemplates::startTemplate };
 	// fstream with ios::out modifier can't create a folder but only a file
 	ASSERT_EQ(Engine::JSONToFile(userdata), Engine::ResponseCode::FailedFileOpen);
 }
 
+
 TEST(EngineTest, GetUsers_Success)
 {
 	Engine::filename = "test.txt";
-	ASSERT_EQ(Engine::getUsers().size(), 1);
+	Engine::recreateFile();
+
+	ASSERT_EQ(Engine::getUsers().size(), 1); // only guest
 }
 
 TEST(EngineTest, GetUsers_FailedOpenFile)
@@ -133,17 +139,23 @@ TEST(EngineTest, GetUsers_FailedOpenFile)
 	ASSERT_EQ(Engine::getUsers().size(), 0);
 }
 
+
 TEST(EngineTest, CreateUser_Ok)
 {
 	Engine::filename = "test.txt";
+	Engine::recreateFile();
 	std::string username = "new";
+
 	ASSERT_EQ(Engine::createUser(username), Engine::ResponseCode::Ok);
 }
 
 TEST(EngineTest, CreateUser_CreatingIdenticalUser)
 {
 	Engine::filename = "test.txt";
+	Engine::recreateFile();
 	std::string username = "new";
+	Engine::createUser(username);
+
 	ASSERT_EQ(Engine::createUser(username), Engine::ResponseCode::CreatingIdenticalUser);
 	ASSERT_EQ(username, "");
 }
@@ -152,13 +164,58 @@ TEST(EngineTest, CreateUser_EmptyUsername)
 {
 	Engine::filename = "test.txt";
 	std::string username = "";
+
 	ASSERT_EQ(Engine::createUser(username), Engine::ResponseCode::EmptyUsername);
 }
+
+
+TEST(EngineTest, ChooseUser_OkGuest)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	std::string username = "";
+
+	ASSERT_EQ(Engine::chooseUser(username, 0), Engine::ResponseCode::Ok); // Chosen "guest"
+	ASSERT_EQ(username, "");
+}
+
+TEST(EngineTest, ChooseUser_OkUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	std::string username = "new";
+	Engine::createUser(username);
+
+	ASSERT_EQ(Engine::chooseUser(username, 1), Engine::ResponseCode::Ok); // Chosen "new"
+	ASSERT_EQ(username, "new");
+}
+
+TEST(EngineTest, ChooseUser_InvalidInputGuest)
+{
+	Engine::filename = "test.txt";
+	std::string username = "";
+
+	ASSERT_EQ(Engine::chooseUser(username, -1), Engine::ResponseCode::InvalidInput);
+}
+
+TEST(EngineTest, ChooseUser_InvalidInputUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	std::string username = "new";
+	Engine::createUser(username);
+
+	ASSERT_EQ(Engine::chooseUser(username, -1), Engine::ResponseCode::InvalidInput);
+}
+
 
 TEST(EngineTest, DeleteUser_Ok)
 {
 	Engine::filename = "test.txt";
+	Engine::recreateFile();
 	std::string username = "new";
+	Engine::createUser(username);
+
 	ASSERT_EQ(Engine::deleteUser(username), Engine::ResponseCode::Ok);
 	ASSERT_EQ(username, "");
 }
@@ -166,7 +223,9 @@ TEST(EngineTest, DeleteUser_Ok)
 TEST(EngineTest, DeleteUser_NoUser)
 {
 	Engine::filename = "test.txt";
+	Engine::recreateFile();
 	std::string username = "new";
+
 	ASSERT_EQ(Engine::deleteUser(username), Engine::ResponseCode::NoUser);
 	ASSERT_EQ(username, "");
 }
@@ -175,5 +234,273 @@ TEST(EngineTest, DeleteUser_EmptyUsername)
 {
 	Engine::filename = "test.txt";
 	std::string username = "";
+
 	ASSERT_EQ(Engine::deleteUser(username), Engine::ResponseCode::EmptyUsername);
+}
+
+
+TEST(EngineTest, GetFavoriteBooks_OkUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile(JSONTemplates::fullTemplate);
+
+	ASSERT_EQ(Engine::getFavoriteBooks("user").size(), 1);
+}
+
+TEST(EngineTest, GetFavoriteBooks_GuestFavoriteBook)
+{
+	Engine::filename = "test.txt";
+
+	ASSERT_EQ(Engine::getFavoriteBooks("").size(), 0); // guest has 0 favorite books
+}
+
+TEST(EngineTest, GetFavoriteBooks_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+
+	ASSERT_EQ(Engine::getFavoriteBooks("user").size(), 0);
+}
+
+
+TEST(EngineTest, AddFavoriteBook_Ok)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	std::string username = "new";
+	Engine::createUser(username);
+	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+
+	ASSERT_EQ(Engine::addFavoriteBook(username, favoriteBook), Engine::ResponseCode::Ok);
+	ASSERT_EQ(Engine::getFavoriteBooks(username).size(), 1);
+	ASSERT_EQ(Engine::getFavoriteBooks(username)[0], favoriteBook);
+}
+
+TEST(EngineTest, AddFavoriteBook_GuestFavoriteBook)
+{
+	Engine::filename = "test.txt";
+	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+
+	ASSERT_EQ(Engine::addFavoriteBook("", favoriteBook), Engine::ResponseCode::GuestFavoriteBook);
+	ASSERT_EQ(Engine::getFavoriteBooks("").size(), 0);
+}
+
+TEST(EngineTest, AddFavoriteBook_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+
+	ASSERT_EQ(Engine::addFavoriteBook("user", favoriteBook), Engine::ResponseCode::NoUser);
+	ASSERT_EQ(Engine::getFavoriteBooks("user").size(), 0);
+}
+
+
+TEST(EngineTest, DeleteFavoriteBook_Ok)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile(JSONTemplates::fullTemplate);
+
+	ASSERT_EQ(Engine::deleteFavoriteBook("user", 0), Engine::ResponseCode::Ok);
+	ASSERT_EQ(Engine::getFavoriteBooks("user").size(), 0);
+}
+
+TEST(EngineTest, DeleteFavoriteBook_GuestFavoriteBook)
+{
+	Engine::filename = "test.txt";
+
+	ASSERT_EQ(Engine::deleteFavoriteBook("", 0), Engine::ResponseCode::GuestFavoriteBook);
+}
+
+TEST(EngineTest, DeleteFavoriteBook_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+
+	ASSERT_EQ(Engine::deleteFavoriteBook("user", 0), Engine::ResponseCode::NoUser);
+	ASSERT_EQ(Engine::getFavoriteBooks("user").size(), 0);
+}
+
+
+TEST(EngineTest, GetRecentlyBooks_OkUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile(JSONTemplates::fullTemplate);
+
+	ASSERT_EQ(Engine::getRecentlyBooks("user").size(), 1);
+}
+
+TEST(EngineTest, GetRecentlyBooks_GuestFavoriteBook)
+{
+	Engine::filename = "test.txt";
+
+	ASSERT_EQ(Engine::getRecentlyBooks("").size(), 0); // guest has 0 recently books
+}
+
+TEST(EngineTest, GetRecentlyBooks_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+
+	ASSERT_EQ(Engine::getRecentlyBooks("user").size(), 0);
+}
+
+
+TEST(EngineTest, AddRecentlyBook_Ok)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	std::string username = "new";
+	Engine::createUser(username);
+	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+
+	ASSERT_EQ(Engine::addRecentlyBook(username, recentlyBook), Engine::ResponseCode::Ok);
+	ASSERT_EQ(Engine::getRecentlyBooks(username).size(), 1);
+	ASSERT_EQ(Engine::getRecentlyBooks(username)[0], recentlyBook);
+}
+
+TEST(EngineTest, AddRecentlyBook_GuestFavoriteBook)
+{
+	Engine::filename = "test.txt";
+	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+
+	ASSERT_EQ(Engine::addRecentlyBook("", recentlyBook), Engine::ResponseCode::GuestFavoriteBook);
+	ASSERT_EQ(Engine::getRecentlyBooks("").size(), 0);
+}
+
+TEST(EngineTest, AddRecentlyBook_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+
+	ASSERT_EQ(Engine::addRecentlyBook("user", recentlyBook), Engine::ResponseCode::NoUser);
+	ASSERT_EQ(Engine::getRecentlyBooks("user").size(), 0);
+}
+
+
+TEST(EngineTest, DeleteRecentlyBook_Ok)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile(JSONTemplates::fullTemplate);
+
+	ASSERT_EQ(Engine::deleteRecentlyBook("user", 0), Engine::ResponseCode::Ok);
+	ASSERT_EQ(Engine::getRecentlyBooks("user").size(), 0);
+}
+
+TEST(EngineTest, DeleteRecentlyBook_GuestFavoriteBook)
+{
+	Engine::filename = "test.txt";
+
+	ASSERT_EQ(Engine::deleteRecentlyBook("", 0), Engine::ResponseCode::GuestFavoriteBook);
+}
+
+TEST(EngineTest, DeleteRecentlyBook_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+
+	ASSERT_EQ(Engine::deleteRecentlyBook("user", 0), Engine::ResponseCode::NoUser);
+	ASSERT_EQ(Engine::getRecentlyBooks("user").size(), 0);
+}
+
+
+TEST(EngineTest, Search)
+{
+	Engine::SearchParams sParams{ {"J.R.R. Tolkien"}, {}, "The lord of the rings", 0, Engine::Sort::None, 100 };
+	long connectionStatus{ Engine::testConnection() };
+	std::vector<Book> books = Engine::search(sParams);
+
+	EXPECT_EQ(connectionStatus, 200);
+	ASSERT_EQ(books.size(), 100);
+	ASSERT_EQ(books[0].getAuthor().empty(), false);
+	ASSERT_EQ(books[0].getLanguage().empty(), false);
+	ASSERT_EQ(books[0].getTitle().empty(), false);
+	ASSERT_NE(books[0].getYear(), 0);
+	ASSERT_EQ(books[0].getLink().empty(), false);
+}
+
+TEST(EngineTest, RandomSearch)
+{
+	Engine::SearchParams sParams{ {"J.R.R. Tolkien"}, {}, "The lord of the rings", 0, Engine::Sort::None, 100 };
+	long connectionStatus{ Engine::testConnection() };
+	Book book{ Engine::randomSearch(sParams) };
+
+	EXPECT_EQ(connectionStatus, 200);
+	ASSERT_EQ(book.getAuthor().empty(), false);
+	ASSERT_EQ(book.getLanguage().empty(), false);
+	ASSERT_EQ(book.getTitle().empty(), false);
+	ASSERT_NE(book.getYear(), 0);
+	ASSERT_EQ(book.getLink().empty(), false);
+}
+
+
+TEST(EngineTest, GetSearchParams_OkGuest)
+{
+	Engine::SearchParams sParams;
+
+	ASSERT_EQ(Engine::getSearchParams("", sParams), Engine::ResponseCode::Ok);
+	ASSERT_EQ(sParams.authors.size(), 0);
+	ASSERT_EQ(sParams.langs.size(), 1);
+	ASSERT_EQ(sParams.langs[0], "en");
+	ASSERT_EQ(sParams.title, "The lord of the rings");
+	ASSERT_EQ(sParams.year, 0);
+	ASSERT_EQ(sParams.resListSize, 10);
+}
+
+TEST(EngineTest, GetSearchParams_OkUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile(JSONTemplates::fullTemplate);
+	Engine::SearchParams sParams;
+
+	ASSERT_EQ(Engine::getSearchParams("user", sParams), Engine::ResponseCode::Ok);
+	ASSERT_EQ(sParams.authors.size(), 0);
+	ASSERT_EQ(sParams.langs.size(), 1);
+	ASSERT_EQ(sParams.langs[0], "en");
+	ASSERT_EQ(sParams.title, "The lord of the rings");
+	ASSERT_EQ(sParams.year, 0);
+	ASSERT_EQ(sParams.resListSize, 10);
+}
+
+TEST(EngineTest, GetSearchParams_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	Engine::SearchParams sParams;
+
+	ASSERT_EQ(Engine::getSearchParams("user", sParams), Engine::ResponseCode::NoUser);
+	ASSERT_EQ(sParams.authors.size(), 0);
+	ASSERT_EQ(sParams.langs.size(), 0);
+	ASSERT_EQ(sParams.title.empty(), true);
+	ASSERT_EQ(sParams.year, 0);
+	ASSERT_EQ(sParams.resListSize, 10);
+}
+
+
+TEST(EngineTest, SaveSearchParams_OkGuest)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	Engine::SearchParams sParams{ {"Author"}, {"Language"}, "Title", 2000, Engine::Sort::None, 100 };
+
+	ASSERT_EQ(Engine::saveSearchParams("", sParams), Engine::ResponseCode::Ok);
+}
+
+TEST(EngineTest, SaveSearchParams_OkUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile(JSONTemplates::fullTemplate);
+	Engine::SearchParams sParams{ {"Author"}, {"Language"}, "Title", 2000, Engine::Sort::None, 100 };
+
+	ASSERT_EQ(Engine::getSearchParams("user", sParams), Engine::ResponseCode::Ok);
+}
+
+TEST(EngineTest, SaveSearchParams_NoUser)
+{
+	Engine::filename = "test.txt";
+	Engine::recreateFile();
+	Engine::SearchParams sParams{ {"Author"}, {"Language"}, "Title", 2000, Engine::Sort::None, 100 };
+
+	ASSERT_EQ(Engine::getSearchParams("user", sParams), Engine::ResponseCode::NoUser);
 }
