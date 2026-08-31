@@ -2,7 +2,9 @@
 
 long Engine::testConnection()
 {
-	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" });
+	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" },
+		cpr::Parameters{ {"q", "the+lord+of+the+rings"} },
+		cpr::VerifySsl{ false });
 	return r.status_code;
 }
 
@@ -355,21 +357,64 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 		}
 	}
 
-	cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"}, cprParams);
+	cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
+		cprParams,
+		cpr::VerifySsl{ false });
 	json response{ json::parse(r.text) };
 	std::vector<Book> books;
+	Book book;
 	for (int i{}; i < sParams.resListSize; ++i)
 	{
-		books.push_back(Book(response["docs"][i]["author_name"],
-			response["docs"][i]["language"],
-			response["docs"][i]["title"],
-			[](const json& response, const int& iter)->std::string
+		if (i < response["docs"].size())
+		{
+			if (response["docs"][i].contains("author_name"))
 			{
-				std::string link{ "https://openlibrary.org" + response["docs"][iter]["key"].get<std::string>() + "/" + response["docs"][iter]["title"].get<std::string>() };
-				std::replace(begin(link), end(link), ' ', '_');
-				return link;
-			}(response, i),
-			response["docs"][i]["first_publish_year"]));
+				book.setAuthor(response["docs"][i]["author_name"]);
+			}
+			else
+			{
+				book.setAuthor({});
+			}
+			if (response["docs"][i].contains("language"))
+			{
+				book.setLanguage(response["docs"][i]["language"]);
+			}
+			else
+			{
+				book.setLanguage({});
+			}
+			if (response["docs"][i].contains("title"))
+			{
+				book.setTitle(response["docs"][i]["title"]);
+				if (response["docs"][i].contains("key"))
+				{
+					book.setLink([](const json& response, const int& iter)->std::string
+					{
+						std::string link{ "https://openlibrary.org" + response["docs"][iter]["key"].get<std::string>() + "/" + response["docs"][iter]["title"].get<std::string>() };
+						std::replace(begin(link), end(link), ' ', '_');
+						return link;
+					}(response, i));
+				}
+				else
+				{
+					book.setLink("");
+				}
+			}
+			else
+			{
+				book.setTitle("");
+				book.setLink("");
+			}
+			if (response["docs"][i].contains("first_publish_year"))
+			{
+				book.setYear(response["docs"][i]["first_publish_year"]);
+			}
+			else
+			{
+				book.setYear(0);
+			}
+			books.push_back(book);
+		}
 	}
 	return books;
 }
@@ -397,7 +442,9 @@ Book Engine::randomSearch(const SearchParams& sParams)
 	}
 
 	// Search
-	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" }, cprParams);
+	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" },
+		cprParams,
+		cpr::VerifySsl{ false });
 	json response{ json::parse(r.text) };
 	
 	// Random number
@@ -441,7 +488,7 @@ Engine::ResponseCode Engine::getSearchParams(std::string_view username, SearchPa
 	{
 		return ResponseCode::EmptyJSON;
 	}
-	for (int i{}; i < userdata["users"]; ++i)
+	for (int i{}; i < userdata["users"].size(); ++i)
 	{
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{

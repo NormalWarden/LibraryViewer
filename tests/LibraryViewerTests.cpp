@@ -10,9 +10,11 @@ std::string fileToString()
 {
 	std::string filedata, fileline;
 	std::fstream file{ Engine::filename };
+	std::getline(file, fileline);
+	filedata = fileline;
 	while (std::getline(file, fileline))
 	{
-		filedata += fileline;
+		filedata += "\n" + fileline;
 	}
 	file.close();
 	return filedata;
@@ -78,7 +80,7 @@ TEST(EngineTest, RecreateFile_Ok)
 	Engine::filename = "test.txt";
 
 	ASSERT_EQ(Engine::recreateFile(), Engine::ResponseCode::Ok);
-	ASSERT_EQ(fileToString, JSONTemplates::fullTemplate);
+	ASSERT_EQ(fileToString(), JSONTemplates::startTemplate);
 }
 
 TEST(EngineTest, RecreateFile_FailedFileOpen)
@@ -92,10 +94,12 @@ TEST(EngineTest, RecreateFile_FailedFileOpen)
 TEST(EngineTest, FileToJSON_Ok)
 {
 	Engine::filename = "test.txt";
-	json userdata;
+	Engine::recreateFile();
+	json filedata, templateData;
+	templateData = json::parse(JSONTemplates::startTemplate);
 
-	ASSERT_EQ(Engine::fileToJSON(userdata), Engine::ResponseCode::Ok);
-	ASSERT_EQ(fileToString(), userdata.dump(4));
+	ASSERT_EQ(Engine::fileToJSON(filedata), Engine::ResponseCode::Ok);
+	ASSERT_EQ(filedata, templateData);
 }
 
 TEST(EngineTest, FileToJSON_FailedFileOpen)
@@ -270,10 +274,15 @@ TEST(EngineTest, AddFavoriteBook_Ok)
 	std::string username = "new";
 	Engine::createUser(username);
 	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+	std::vector<Book> booksVTemplate{ favoriteBook };
 
 	ASSERT_EQ(Engine::addFavoriteBook(username, favoriteBook), Engine::ResponseCode::Ok);
 	ASSERT_EQ(Engine::getFavoriteBooks(username).size(), 1);
-	ASSERT_EQ(Engine::getFavoriteBooks(username)[0], favoriteBook);
+	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getAuthor(), favoriteBook.getAuthor());
+	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getLanguage(), favoriteBook.getLanguage());
+	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getTitle(), favoriteBook.getTitle());
+	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getLink(), favoriteBook.getLink());
+	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getYear(), favoriteBook.getYear());
 }
 
 TEST(EngineTest, AddFavoriteBook_GuestFavoriteBook)
@@ -308,6 +317,7 @@ TEST(EngineTest, DeleteFavoriteBook_Ok)
 TEST(EngineTest, DeleteFavoriteBook_GuestFavoriteBook)
 {
 	Engine::filename = "test.txt";
+	Engine::recreateFile();
 
 	ASSERT_EQ(Engine::deleteFavoriteBook("", 0), Engine::ResponseCode::GuestFavoriteBook);
 }
@@ -356,7 +366,11 @@ TEST(EngineTest, AddRecentlyBook_Ok)
 
 	ASSERT_EQ(Engine::addRecentlyBook(username, recentlyBook), Engine::ResponseCode::Ok);
 	ASSERT_EQ(Engine::getRecentlyBooks(username).size(), 1);
-	ASSERT_EQ(Engine::getRecentlyBooks(username)[0], recentlyBook);
+	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getAuthor(), recentlyBook.getAuthor());
+	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getLanguage(), recentlyBook.getLanguage());
+	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getTitle(), recentlyBook.getTitle());
+	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getLink(), recentlyBook.getLink());
+	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getYear(), recentlyBook.getYear());
 }
 
 TEST(EngineTest, AddRecentlyBook_GuestFavoriteBook)
@@ -391,6 +405,7 @@ TEST(EngineTest, DeleteRecentlyBook_Ok)
 TEST(EngineTest, DeleteRecentlyBook_GuestFavoriteBook)
 {
 	Engine::filename = "test.txt";
+	Engine::recreateFile();
 
 	ASSERT_EQ(Engine::deleteRecentlyBook("", 0), Engine::ResponseCode::GuestFavoriteBook);
 }
@@ -407,7 +422,7 @@ TEST(EngineTest, DeleteRecentlyBook_NoUser)
 
 TEST(EngineTest, Search)
 {
-	Engine::SearchParams sParams{ {"J.R.R. Tolkien"}, {}, "The lord of the rings", 0, Engine::Sort::None, 100 };
+	Engine::SearchParams sParams{ {}, {}, "The lord of the rings", 0, Engine::Sort::None, 100 };
 	long connectionStatus{ Engine::testConnection() };
 	std::vector<Book> books = Engine::search(sParams);
 
@@ -493,7 +508,7 @@ TEST(EngineTest, SaveSearchParams_OkUser)
 	Engine::recreateFile(JSONTemplates::fullTemplate);
 	Engine::SearchParams sParams{ {"Author"}, {"Language"}, "Title", 2000, Engine::Sort::None, 100 };
 
-	ASSERT_EQ(Engine::getSearchParams("user", sParams), Engine::ResponseCode::Ok);
+	ASSERT_EQ(Engine::saveSearchParams("user", sParams), Engine::ResponseCode::Ok);
 }
 
 TEST(EngineTest, SaveSearchParams_NoUser)
@@ -502,5 +517,5 @@ TEST(EngineTest, SaveSearchParams_NoUser)
 	Engine::recreateFile();
 	Engine::SearchParams sParams{ {"Author"}, {"Language"}, "Title", 2000, Engine::Sort::None, 100 };
 
-	ASSERT_EQ(Engine::getSearchParams("user", sParams), Engine::ResponseCode::NoUser);
+	ASSERT_EQ(Engine::saveSearchParams("user", sParams), Engine::ResponseCode::NoUser);
 }

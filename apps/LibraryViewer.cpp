@@ -1,6 +1,4 @@
-﻿#include <iostream>
-
-#include <cpr/cpr.h>
+﻿#include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
 #include "engine.h"
@@ -10,16 +8,11 @@ using json = nlohmann::json;
 
 int main()
 {
-	UI::firstMessage();
-	/*cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
-		cpr::Parameters{ {"q", "the+lord+of+the+rings"} });
-	json j = json::parse(r.text);*/
-	//std::cout << j["docs"][0].dump(4);
-
-	UI::printTestConnectionRes(Engine::testConnection());
-	
 	std::string user;
 	Engine::SearchParams sParams;
+
+	UI::firstMessage();
+	UI::printTestConnectionRes(Engine::testConnection());
 	while (true)
 	{
 		UI::printOptions();

@@ -15,6 +15,32 @@ Book& Book::operator=(const Book& bookSrc)
 	this->link = bookSrc.getLink();
 	return *this;
 }
+
+void Book::setAuthor(const std::vector<std::string>& author)
+{
+	this->author = author;
+}
+
+void Book::setLanguage(const std::vector<std::string>& language)
+{
+	this->language = language;
+}
+
+void Book::setTitle(std::string_view title)
+{
+	this->title = title;
+}
+
+void Book::setLink(std::string_view link)
+{
+	this->link = link;
+}
+
+void Book::setYear(const size_t year)
+{
+	this->year = year;
+}
+
 std::vector<std::string> Book::getAuthor() const
 {
 	return author;
@@ -30,12 +56,12 @@ std::string Book::getTitle() const
 	return title;
 }
 
-size_t Book::getYear() const
-{
-	return year;
-}
-
 std::string Book::getLink() const
 {
 	return link;
+}
+
+size_t Book::getYear() const
+{
+	return year;
 }
