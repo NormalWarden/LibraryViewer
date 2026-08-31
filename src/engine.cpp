@@ -307,6 +307,44 @@ Engine::ResponseCode Engine::deleteRecentlyBook(std::string_view username, const
 	return ResponseCode::NoUser;
 }
 
+std::string Engine::getBookDescription(std::string_view link)
+{
+	if (link.empty())
+	{
+		return "";
+	}
+	
+	cpr::Response r = cpr::Get(cpr::Url{ link },
+		cpr::VerifySsl{ false });
+	std::string description;
+	if (r.text.find("<ol-read-more class=\"book-description\" more-text=\"Read More\" less-text=\"Read Less\">") != std::string::npos &&
+		r.text.find("</ol-read-more>") != std::string::npos)
+	{
+		description = std::string(begin(r.text) + 83 + r.text.find("<ol-read-more class=\"book-description\" more-text=\"Read More\" less-text=\"Read Less\">"),
+			begin(r.text) + r.text.find("</ol-read-more>")); // Entire description with HTML tags. 83 - count of desired string in find
+	}	
+	if (description.find("<p>") != std::string::npos)
+	{
+		description = std::string(begin(description) + 3 + description.find("<p>"), end(description)); // Description without first spaces and <p>. 3 - count of string "<p>"
+	}
+	if (description.find("<hr/>") != std::string::npos)
+	{
+		description = std::string(begin(description), begin(description) + description.find("<hr/>")); // Description without information about book containing (just some additional info
+	}
+	if (description.find("</p>") != std::string::npos)
+	{
+		description = std::string(begin(description), begin(description) + description.rfind("</p>")); // Description without last spaces and </p>
+	}
+
+	for (size_t pos{ description.find("</p>") }; pos != std::string::npos; pos = description.find("</p>"))
+	{
+		description.erase(pos, 8); // 8 - count of string "</p>\n<p>"
+		pos = description.find("</p>");
+	}
+
+	return description;
+}
+
 std::vector<Book> Engine::search(const SearchParams& sParams)
 {
 	cpr::Parameters cprParams;

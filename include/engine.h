@@ -44,6 +44,8 @@ namespace Engine
 	ResponseCode addRecentlyBook(std::string_view username, Book book);
 	ResponseCode deleteRecentlyBook(std::string_view username, const short bookNumber);
 
+	std::string getBookDescription(std::string_view link);
+
 	std::vector<Book> search(const SearchParams& sParams);
 	Book randomSearch(const SearchParams& sParams);
 
