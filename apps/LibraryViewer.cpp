@@ -32,9 +32,14 @@ int main()
 			UI::systemMessage(Engine::saveSearchParams(user, sParams));
 			books = Engine::search(sParams);
 			UI::printBooks(books);
+			if (books.empty())
+			{
+				break;
+			}
 			UI::printAfterSearchOptions();
 			for (short choice{ UI::getUserChoice() }; choice != 3; choice = UI::getUserChoice())
 			{
+				UI::printAfterSearchOptions();
 				switch (choice)
 				{
 				case 1:
@@ -47,6 +52,7 @@ int main()
 			}
 			break;
 		case 4: // Search randomly
+			UI::printRandomSearchParams(sParams);
 			books.clear();
 			books.push_back(Engine::randomSearch(UI::specifyingRandomSearchParams()));
 			UI::printBooks(books);
@@ -71,6 +77,9 @@ int main()
 				UI::systemMessage(Engine::recreateFile());
 				break;
 			case 2: // Delete the user
+				UI::printChosenUser(user);
+				UI::printUsers(Engine::getUsers());
+				UI::systemMessage(Engine::chooseUser(user, UI::getUserChoice() - 1));
 				UI::systemMessage(Engine::deleteUser(user));
 				break;
 			case 3: // Unfavorite a book

@@ -5,7 +5,7 @@
 
 #include <fstream>
 #include <vector>
-#include <string> // TODO: replace to string_view
+#include <string>
 #include <string_view>
 #include <algorithm>
 #include <random>
@@ -31,7 +31,7 @@ namespace Engine
 	ResponseCode fileToJSON(json& userdata);
 	ResponseCode JSONToFile(const json& userdata);
 
-	std::vector<std::string_view> getUsers();
+	std::vector<std::string> getUsers();
 	ResponseCode createUser(std::string& username);
 	ResponseCode chooseUser(std::string& username, const short choice);
 	ResponseCode deleteUser(std::string& username);

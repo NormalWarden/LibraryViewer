@@ -54,9 +54,9 @@ Engine::ResponseCode Engine::JSONToFile(const json& userdata)
 	return ResponseCode::Ok;
 }
 
-std::vector<std::string_view> Engine::getUsers()
+std::vector<std::string> Engine::getUsers()
 {
-	std::vector<std::string_view> users;
+	std::vector<std::string> users;
 	json userdata{};
 	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
 	{
@@ -278,6 +278,10 @@ Engine::ResponseCode Engine::addRecentlyBook(std::string_view username, Book boo
 				{"title", book.getTitle()},
 				{"year", book.getYear()},
 				{"link", book.getLink()}});
+			while (userdata["users"][i]["recentlyBooks"].size() >= 5)
+			{
+				userdata["users"][i]["recentlyBooks"].erase(0);
+			}
 			return JSONToFile(userdata);
 		}
 	}
@@ -364,7 +368,7 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 	}
 	if (sParams.year != 0)
 	{
-		cprParams.Add({ "publish_year", std::to_string(sParams.year) });
+		cprParams.Add({ "first_publish_year", std::to_string(sParams.year) });
 	}
 	if (!sParams.authors.empty())
 	{
@@ -472,9 +476,11 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 Book Engine::randomSearch(const SearchParams& sParams)
 {	
 	cpr::Parameters cprParams;
+	cprParams.Add({ "q", "*:*" }); // Book with any name (especially for the Apache Solr - search engine in openlibrary)
+	cprParams.Add({ "sort", "random" });
 	if (sParams.year != 0)
 	{
-		cprParams.Add({ "publish_year", std::to_string(sParams.year) });
+		cprParams.Add({ "first_publish_year", std::to_string(sParams.year) });
 	}
 	if (!sParams.authors.empty())
 	{
@@ -518,8 +524,8 @@ Engine::ResponseCode Engine::getSearchParams(std::string_view username, SearchPa
 	if (username.empty()) // guest
 	{
 		sParams.authors = {};
-		sParams.langs = { "en" };
-		sParams.title = "The lord of the rings";
+		sParams.langs = {};
+		sParams.title = "";
 		sParams.year = 0;
 		sParams.sort = Sort::None;
 		sParams.resListSize = 10;

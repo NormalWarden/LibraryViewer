@@ -7,7 +7,8 @@ void UI::firstMessage()
 
 void UI::printOptions()
 {
-	std::cout << "You can do:\n"
+	std::cout << "--------------------\n"
+		<< "You can do:\n"
 		<< "1. Open list of my books\n"
 		<< "2. Look recently looked books\n"
 		<< "3. Search\n"
@@ -21,7 +22,8 @@ void UI::printOptions()
 
 void UI::printSpecialOptions()
 {
-	std::cout << "You can do:\n"
+	std::cout << "--------------------\n"
+		<< "You can do:\n"
 		<< "1. Recreate the file with user data\n"
 		<< "2. Delete the user\n"
 		<< "3. Unfavorite a book\n"
@@ -32,7 +34,8 @@ void UI::printSpecialOptions()
 
 void UI::printAfterSearchOptions()
 {
-	std::cout << "You can:\n"
+	std::cout << "--------------------\n"
+		<< "You can:\n"
 		<< "1. Look a book description\n"
 		<< "2. Favorite a book\n"
 		<< "3. Return to previous menu\n"
@@ -43,7 +46,6 @@ short UI::getUserChoice()
 {
 	short choice{};
 	std::cin >> choice;
-	std::cout << "\n";
 	return choice;
 }
 
@@ -52,7 +54,6 @@ std::string UI::getNewUsername()
 	std::string username;
 	std::cout << "Enter the new user name: ";
 	std::cin >> username;
-	std::cout << "\n";
 	return username;
 }
 
@@ -67,24 +68,30 @@ void UI::printChosenUser(std::string_view username)
 	{
 		std::cout << username;
 	}
+	std::cout << "\n";
 }
 
-void UI::printUsers(const std::vector<std::string_view>& users)
+void UI::printUsers(const std::vector<std::string>& users)
 {
-	std::cout << "Choose guest user, a user name or create new one:";
+	std::cout << "Choose guest user or a user name:";
 	std::cout << "\n1. Guest";
-	for (int i{}; i < users.size(); ++i)
+	for (int i{1}; i < users.size(); ++i)
 	{
-		std::cout << "\n" << i + 2 << ". " << users[i];
+		std::cout << "\n" << i + 1 << ". " << users[i];
 	}
-	std::cout << "\n";
+	std::cout << "\n1..." << users.size() << ": ";
 }
 
 void UI::printBooks(const std::vector<Book>& books)
 {
+	if (books.empty())
+	{
+		std::cout << "No books to print\n";
+		return;
+	}
 	for (int book{}; book < books.size(); ++book)
 	{
-		std::cout << book << ". " << books[book].getTitle()
+		std::cout << book + 1 << ". " << books[book].getTitle()
 			<< "(" << books[book].getYear() << ", "
 			<< [](const std::vector<std::string>& authorsV)->std::string
 			{
@@ -111,7 +118,27 @@ void UI::printBooks(const std::vector<Book>& books)
 
 void UI::printBookDescription(std::string_view description)
 {
-	std::cout << description << "\n";
+	if (description.empty())
+	{
+		std::cout << "No description for this book\n";
+	}
+	else
+	{
+		std::cout << description << "\n";
+	}
+}
+
+void UI::printTestConnectionRes(const long status)
+{
+	std::cout << "Trying to connect to https://openlibrary.org/...\n";
+	if (status == 200)
+	{
+		std::cout << "Connection successfull\n";
+	}
+	else
+	{
+		std::cout << "Failed to connect to https://openlibrary.org/. Error: " << status << "\n";
+	}
 }
 
 void UI::systemMessage(const Engine::ResponseCode response)
@@ -130,7 +157,7 @@ void UI::systemMessage(const Engine::ResponseCode response)
 		std::cout << "Failed to update user data in file\n";
 		return;
 	case Engine::ResponseCode::EmptyUsername:
-		std::cout << "User not created: failed to create user without name\n";
+		std::cout << "Unable to create user without name, delete him and do the same with guest\n";
 		return;
 	case Engine::ResponseCode::CreatingIdenticalUser:
 		std::cout << "User not created: a user with that name already exists\n";
@@ -147,10 +174,16 @@ void UI::systemMessage(const Engine::ResponseCode response)
 void UI::changeAuthorSearch(Engine::SearchParams& sParams)
 {
 	std::string newAuthor;
-	std::cout << "\nEnter the author or leave the field blank to search any author: ";
-	std::cin >> newAuthor;
-	sParams.authors.push_back(newAuthor);
-	std::cout << "\n";
+	while (true)
+	{
+		std::cout << "Enter the author or type minus (\"-\") to leave the field blank to search any author: ";
+		std::cin >> newAuthor;
+		if (newAuthor == "-")
+		{
+			break;
+		}
+		sParams.authors.push_back(newAuthor);
+	}
 }
 
 void UI::changeLanguageSearch(Engine::SearchParams& sParams)
@@ -159,36 +192,50 @@ void UI::changeLanguageSearch(Engine::SearchParams& sParams)
 	sParams.langs.clear();
 	while (true)
 	{
-		std::cout << "\nEnter the language name in English or leave the field blank to end editing language parameter: ";
+		std::cout << "Enter the language name in English or type minus (\"-\") to leave the field blank to end editing language parameter: ";
 		std::cin >> newLang;
+		if (newLang == "-")
+		{
+			break;
+		}
 		if (LangStorage::language.find(newLang) != LangStorage::language.end())
 		{
 			sParams.langs.push_back(LangStorage::language[newLang]);
 		}
-		std::cout << "\n";
 	}
 }
 
 void UI::changeTitleSearch(Engine::SearchParams& sParams)
 {
-	std::cout << "\nEnter the title or leave the field blank to search any title: ";
+	std::cout << "Enter the title or type minus (\"-\") to leave the field blank to search any title : ";
 	std::cin >> sParams.title;
-	std::cout << "\n";
+	if (sParams.title == "-")
+	{
+		sParams.title = "";
+	}
 }
 
 void UI::changeYearSearch(Engine::SearchParams& sParams)
 {
-	char newYear{};
-	std::cout << "\nEnter the year or leave the field blank to search any year: ";
-	std::cin >> newYear;
-	sParams.year = newYear;
-	std::cout << "\n";
+	sParams.year = 0;
+	std::cout << "Enter the year or type zero (\"0\") to search any year: ";
+	std::cin >> sParams.year;
+	if (sParams.year < 0)
+	{
+		sParams.year = 0;
+	}
 }
 
 void UI::changeSortSearch(Engine::SearchParams& sParams)
 {
-	char newSortMode{};
-	std::cout << "\nChoose the sort mode:\n1. Relevant\n2. Count of editions\n3. Old\n4. New\n5. Rating\n1...5: ";
+	int newSortMode{};
+	std::cout << "Choose the sort mode:\n"
+		<< "1. Relevant\n"
+		<< "2. Count of editions\n"
+		<< "3. Old\n"
+		<< "4. New\n"
+		<< "5. Rating\n"
+		<< "1...5: ";
 	std::cin >> newSortMode;
 	switch (newSortMode)
 	{
@@ -211,26 +258,25 @@ void UI::changeSortSearch(Engine::SearchParams& sParams)
 		std::cout << "Invalid choosed number. Choosing sort mode \"relevant\"";
 		sParams.sort = Engine::Sort::None;
 	}
-	std::cout << "\n";
 }
 
 void UI::changeResListSizeSearch(Engine::SearchParams& sParams)
 {
-	int newResListSize{};
-	std::cout << "\nEnter the size of search result list (1...100): ";
-	std::cin >> newResListSize; // TODO: try-catch and checks for number from input
-	sParams.resListSize = newResListSize;
-	std::cout << "\n";
+	std::cout << "Enter the size of search result list (1...100): ";
+	std::cin >> sParams.resListSize;
+	if (sParams.resListSize < 1 || sParams.resListSize > 100)
+	{
+		sParams.resListSize = 10;
+	}
 }
 
 void UI::changeSearchParams(const std::string& username, Engine::SearchParams& sParams)
 {
-	char choice{};
-	std::cout << "Do you want to change the search parameters (Y/N)?\n";
+	short choice{};
+	std::cout << "Do you want to change the search parameters?\n1.Yes\n2.No\n";
 	std::cin >> choice;
-	std::cout << "\n";
 	
-	if (choice != 'Y')
+	if (choice != 1)
 	{
 		return;
 	}
@@ -261,8 +307,9 @@ void UI::changeSearchParams(const std::string& username, Engine::SearchParams& s
 		case 7:
 			return;
 		default:
-			std::cout << "\nInvalid input. Choose from 1 to 7\n";
+			std::cout << "Invalid input. Choose from 1 to 7\n";
 		}
+		UI::printSearchParams(sParams);
 	}
 }
 
@@ -290,7 +337,7 @@ void UI::printSearchParams(const Engine::SearchParams& sParams)
 				return langsStr;
 			}(sParams.langs))
 		<< "\nTitle: " << (sParams.title.empty() ? "any" : sParams.title)
-		<< "\nYear: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
+		<< "\nPublish year: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
 		<< "\nSort mode: " <<
 		[](const Engine::Sort& sort)->std::string
 		{
@@ -313,58 +360,72 @@ void UI::printSearchParams(const Engine::SearchParams& sParams)
 		<< "\nSearch results list size: " << sParams.resListSize << "\n";
 }
 
+void UI::printRandomSearchParams(const Engine::SearchParams& sParams)
+{
+	std::cout << "Search params:"
+		<< "\nAuthor: " << (sParams.authors.empty() ? "any" :
+			[](const std::vector<std::string>& authors)->std::string
+			{
+				std::string authorsStr;
+				for (auto author : authors)
+				{
+					authorsStr = authorsStr + " " + author;
+				}
+				return authorsStr;
+			}(sParams.authors))
+		<< "\nLanguage: " << (sParams.langs.empty() ? "any" :
+			[](const std::vector<std::string>& langs)->std::string
+			{
+				std::string langsStr;
+				for (auto lang : langs)
+				{
+					langsStr = langsStr + " " + lang;
+				}
+				return langsStr;
+			}(sParams.langs))
+		<< "\nPublish year: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
+		<< "\n";
+}
+
 Engine::SearchParams UI::specifyingRandomSearchParams()
 {
 	Engine::SearchParams sParams;
-	char choice{};
+	int choice{};
 	std::string input;
 	while (true)
 	{
-		std::cout << "Do you want to specify some search parameters?\n1.Yes\n2.No\n";
+		std::cout << "Do you want to specify some search parameters?\n1.Yes\n2.No\n1...2: ";
 		std::cin >> choice;
 		if (choice == 1)
 		{
-			std::cout << "\nWhich parameter do you want to change?\n1. Author\n2. Language\n3. Publish year\n";
+			std::cout << "Which parameter do you want to change?\n1. Author\n2. Language\n3. Publish year\n1...3: ";
 			std::cin >> choice;
 			switch (choice)
 			{
 			case 1:
-				std::cout << "\nEnter the author name: ";
+				std::cout << "Enter the author name: ";
 				std::cin >> input;
 				sParams.authors.push_back(input);
 				break;
 			case 2:
-				std::cout << "\nEnter the name of language: ";
+				std::cout << "Enter the name of language: ";
 				std::cin >> input;
 				sParams.langs.push_back(input);
 				break;
 			case 3:
-				std::cout << "\nEnter the publish year: ";
+				std::cout << "Enter the publish year: ";
 				std::cin >> input;
 				sParams.year = std::stoi(input);
 				break;
 			default:
-				std::cout << "\nInvalid input";
+				std::cout << "Invalid input\n";
 			}
-			std::cout << "\n";
 		}
 		else
 		{
 			return sParams;
 		}
-	}
-}
-
-void UI::printTestConnectionRes(const long status)
-{
-	std::cout << "Trying to connect to https://openlibrary.org/...\n";
-	if (status == 200)
-	{
-		std::cout << "Connection successfull\n";
-	}
-	else
-	{
-		std::cout << "Failed to connect to https://openlibrary.org/. Error: " << status << "\n";
+		UI::printRandomSearchParams(sParams);
 	}
 }
 
@@ -373,7 +434,6 @@ void UI::lookBookDescriptionFromSearch(std::string_view username, std::vector<Bo
 	short bookNumber{};
 	std::cout << "Choose from book list above one of them to look the description: ";
 	std::cin >> bookNumber;
-	std::cout << "\n";
 	UI::printBookDescription(Engine::getBookDescription(books.at(bookNumber).getLink()));
 	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber)));
 }
@@ -383,19 +443,17 @@ void UI::favoriteBookFromSearch(std::string_view username, std::vector<Book> boo
 	short bookNumber{};
 	std::cout << "Choose from book list above one of them to favorite: ";
 	std::cin >> bookNumber;
-	std::cout << "\n";
 	UI::systemMessage(Engine::addFavoriteBook(username, books.at(bookNumber)));
 	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber)));
 }
 
 void UI::favoriteRandomBook(std::string_view username, Book book)
 {
-	char choice{};
-	std::cout << "Do you want to favorite the book (Y/N)?\n";
+	short choice{};
+	std::cout << "Do you want to favorite the book?\n1.Yes\n2.No\n1..2: ";
 	std::cin >> choice;
-	std::cout << "\n";
 
-	if (choice != 'Y')
+	if (choice != 1)
 	{
 		return;
 	}

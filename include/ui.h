@@ -16,9 +16,10 @@ namespace UI
 	std::string getNewUsername();
 
 	void printChosenUser(std::string_view username);
-	void printUsers(const std::vector<std::string_view>& users);
+	void printUsers(const std::vector<std::string>& users);
 	void printBooks(const std::vector<Book>& books);
 	void printBookDescription(std::string_view description);
+	void printTestConnectionRes(const long status);
 	void systemMessage(const Engine::ResponseCode response);
 
 	void changeAuthorSearch(Engine::SearchParams& sParams);
@@ -30,10 +31,9 @@ namespace UI
 
 	void changeSearchParams(const std::string& username, Engine::SearchParams& sParams);
 	void printSearchParams(const Engine::SearchParams& sParams);
+	void printRandomSearchParams(const Engine::SearchParams& sParams);
 
 	Engine::SearchParams specifyingRandomSearchParams();
-
-	void printTestConnectionRes(const long status);
 
 	void lookBookDescriptionFromSearch(std::string_view username, std::vector<Book> books);
 	void favoriteBookFromSearch(std::string_view username, std::vector<Book> books);
