@@ -20,7 +20,7 @@ std::string fileToString()
 	return filedata;
 }
 
-TEST(BookTest, VerifyGettersAfterFullInit)
+TEST(BookTest, VerifyAuthorGetter)
 {
 	Book book{ std::vector<std::string>{ "J.R.R. Tolkien"}, 
 		std::vector<std::string>{"Afar"}, 
@@ -28,12 +28,94 @@ TEST(BookTest, VerifyGettersAfterFullInit)
 		"https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings", 
 		1954 };
 	
-	EXPECT_EQ(std::vector<std::string>{"J.R.R. Tolkien"}, book.getAuthor());
-	EXPECT_EQ(std::vector<std::string>{"Afar"}, book.getLanguage());
-	EXPECT_EQ("The Lord of the Rings", book.getTitle());
-	EXPECT_EQ("https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings", book.getLink());
-	EXPECT_EQ(1954, book.getYear());
+	ASSERT_EQ(std::vector<std::string>{"J.R.R. Tolkien"}, book.getAuthor());
 }
+
+TEST(BookTest, VerifyLanguageGetter)
+{
+	Book book{ std::vector<std::string>{ "J.R.R. Tolkien"},
+		std::vector<std::string>{"Afar"},
+		"The Lord of the Rings",
+		"https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings",
+		1954 };
+
+	ASSERT_EQ(std::vector<std::string>{"Afar"}, book.getLanguage());
+}
+
+TEST(BookTest, VerifyTitleGetter)
+{
+	Book book{ std::vector<std::string>{ "J.R.R. Tolkien"},
+		std::vector<std::string>{"Afar"},
+		"The Lord of the Rings",
+		"https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings",
+		1954 };
+
+	ASSERT_EQ("The Lord of the Rings", book.getTitle());
+}
+
+TEST(BookTest, VerifyLinkGetter)
+{
+	Book book{ std::vector<std::string>{ "J.R.R. Tolkien"},
+		std::vector<std::string>{"Afar"},
+		"The Lord of the Rings",
+		"https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings",
+		1954 };
+
+	ASSERT_EQ("https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings", book.getLink());
+}
+
+TEST(BookTest, VerifyYearGetter)
+{
+	Book book{ std::vector<std::string>{ "J.R.R. Tolkien"},
+		std::vector<std::string>{"Afar"},
+		"The Lord of the Rings",
+		"https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings",
+		1954 };
+
+	ASSERT_EQ(1954, book.getYear());
+}
+
+
+TEST(BookTest, VerifyAuthorSetter)
+{
+	Book book{};
+	book.setAuthor(std::vector<std::string>{ "J.R.R. Tolkien"});
+
+	ASSERT_EQ(std::vector<std::string>{"J.R.R. Tolkien"}, book.getAuthor());
+}
+
+TEST(BookTest, VerifyLanguageSetter)
+{
+	Book book{};
+	book.setLanguage(std::vector<std::string>{"Afar"});
+
+	ASSERT_EQ(std::vector<std::string>{"Afar"}, book.getLanguage());
+}
+
+TEST(BookTest, VerifyTitleSetter)
+{
+	Book book{};
+	book.setTitle("The Lord of the Rings");
+
+	ASSERT_EQ("The Lord of the Rings", book.getTitle());
+}
+
+TEST(BookTest, VerifyLinkSetter)
+{
+	Book book{};
+	book.setLink("https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings");
+
+	ASSERT_EQ("https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings", book.getLink());
+}
+
+TEST(BookTest, VerifyYearSetter)
+{
+	Book book{};
+	book.setYear(1954);
+
+	ASSERT_EQ(1954, book.getYear());
+}
+
 
 TEST(BookTest, VerifyCopyConstructor)
 {
@@ -277,20 +359,20 @@ TEST(EngineTest, AddFavoriteBook_Ok)
 	std::vector<Book> booksVTemplate{ favoriteBook };
 
 	ASSERT_EQ(Engine::addFavoriteBook(username, favoriteBook), Engine::ResponseCode::Ok);
-	ASSERT_EQ(Engine::getFavoriteBooks(username).size(), 1);
-	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getAuthor(), favoriteBook.getAuthor());
-	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getLanguage(), favoriteBook.getLanguage());
-	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getTitle(), favoriteBook.getTitle());
-	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getLink(), favoriteBook.getLink());
-	ASSERT_EQ(Engine::getFavoriteBooks(username)[0].getYear(), favoriteBook.getYear());
+	EXPECT_EQ(Engine::getFavoriteBooks(username).size(), 1);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getAuthor(), favoriteBook.getAuthor());
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getLanguage(), favoriteBook.getLanguage());
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getTitle(), favoriteBook.getTitle());
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getLink(), favoriteBook.getLink());
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getYear(), favoriteBook.getYear());
 }
 
-TEST(EngineTest, AddFavoriteBook_GuestFavoriteBook)
+TEST(EngineTest, AddFavoriteBook_GuestFavoriteOrRecentlyBook)
 {
 	Engine::filename = "test.txt";
 	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
-	ASSERT_EQ(Engine::addFavoriteBook("", favoriteBook), Engine::ResponseCode::GuestFavoriteBook);
+	ASSERT_EQ(Engine::addFavoriteBook("", favoriteBook), Engine::ResponseCode::GuestFavoriteOrRecentlyBook);
 	ASSERT_EQ(Engine::getFavoriteBooks("").size(), 0);
 }
 
@@ -319,7 +401,7 @@ TEST(EngineTest, DeleteFavoriteBook_GuestFavoriteBook)
 	Engine::filename = "test.txt";
 	Engine::recreateFile();
 
-	ASSERT_EQ(Engine::deleteFavoriteBook("", 0), Engine::ResponseCode::GuestFavoriteBook);
+	ASSERT_EQ(Engine::deleteFavoriteBook("", 0), Engine::ResponseCode::GuestFavoriteOrRecentlyBook);
 }
 
 TEST(EngineTest, DeleteFavoriteBook_NoUser)
@@ -365,20 +447,20 @@ TEST(EngineTest, AddRecentlyBook_Ok)
 	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
 	ASSERT_EQ(Engine::addRecentlyBook(username, recentlyBook), Engine::ResponseCode::Ok);
-	ASSERT_EQ(Engine::getRecentlyBooks(username).size(), 1);
-	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getAuthor(), recentlyBook.getAuthor());
-	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getLanguage(), recentlyBook.getLanguage());
-	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getTitle(), recentlyBook.getTitle());
-	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getLink(), recentlyBook.getLink());
-	ASSERT_EQ(Engine::getRecentlyBooks(username)[0].getYear(), recentlyBook.getYear());
+	EXPECT_EQ(Engine::getRecentlyBooks(username).size(), 1);
+	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getAuthor(), recentlyBook.getAuthor());
+	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getLanguage(), recentlyBook.getLanguage());
+	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getTitle(), recentlyBook.getTitle());
+	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getLink(), recentlyBook.getLink());
+	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getYear(), recentlyBook.getYear());
 }
 
-TEST(EngineTest, AddRecentlyBook_GuestFavoriteBook)
+TEST(EngineTest, AddRecentlyBook_GuestFavoriteOrRecentlyBook)
 {
 	Engine::filename = "test.txt";
 	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
-	ASSERT_EQ(Engine::addRecentlyBook("", recentlyBook), Engine::ResponseCode::GuestFavoriteBook);
+	ASSERT_EQ(Engine::addRecentlyBook("", recentlyBook), Engine::ResponseCode::GuestFavoriteOrRecentlyBook);
 	ASSERT_EQ(Engine::getRecentlyBooks("").size(), 0);
 }
 
@@ -407,7 +489,7 @@ TEST(EngineTest, DeleteRecentlyBook_GuestFavoriteBook)
 	Engine::filename = "test.txt";
 	Engine::recreateFile();
 
-	ASSERT_EQ(Engine::deleteRecentlyBook("", 0), Engine::ResponseCode::GuestFavoriteBook);
+	ASSERT_EQ(Engine::deleteRecentlyBook("", 0), Engine::ResponseCode::GuestFavoriteOrRecentlyBook);
 }
 
 TEST(EngineTest, DeleteRecentlyBook_NoUser)
@@ -417,6 +499,22 @@ TEST(EngineTest, DeleteRecentlyBook_NoUser)
 
 	ASSERT_EQ(Engine::deleteRecentlyBook("user", 0), Engine::ResponseCode::NoUser);
 	ASSERT_EQ(Engine::getRecentlyBooks("user").size(), 0);
+}
+
+
+TEST(EngineTest, GetBookDescription_Ok)
+{
+	ASSERT_EQ(Engine::getBookDescription("https://openlibrary.org/works/OL27448W/The_Lord_of_the_Rings").empty(), false);
+}
+
+TEST(EngineTest, GetBookDescription_EmptyLink)
+{
+	ASSERT_EQ(Engine::getBookDescription("").empty(), true);
+}
+
+TEST(EngineTest, GetBookDescription_BadLink)
+{
+	ASSERT_EQ(Engine::getBookDescription("https://openlibrary.org/works/BAD/The_Lord_of_the_Rings").empty(), true);
 }
 
 

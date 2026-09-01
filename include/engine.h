@@ -51,6 +51,8 @@ namespace Engine
 
 	ResponseCode getSearchParams(std::string_view username, SearchParams& sParams);
 	ResponseCode saveSearchParams(std::string_view username, const SearchParams& sParams);
+
+	int randBookNumber();
 }
 
 enum class Engine::ResponseCode
@@ -63,7 +65,7 @@ enum class Engine::ResponseCode
 	EmptyUsername,
 	CreatingIdenticalUser,
 	InvalidInput,
-	GuestFavoriteBook
+	GuestFavoriteOrRecentlyBook
 };
 
 enum class Engine::Sort

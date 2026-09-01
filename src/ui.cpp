@@ -7,7 +7,8 @@ void UI::firstMessage()
 
 void UI::printOptions()
 {
-	std::cout << "1. Open list of my books\n"
+	std::cout << "You can do:\n"
+		<< "1. Open list of my books\n"
 		<< "2. Look recently looked books\n"
 		<< "3. Search\n"
 		<< "4. Search randomly\n"
@@ -20,11 +21,22 @@ void UI::printOptions()
 
 void UI::printSpecialOptions()
 {
-	std::cout << "1. Recreate the file with user data\n"
+	std::cout << "You can do:\n"
+		<< "1. Recreate the file with user data\n"
 		<< "2. Delete the user\n"
 		<< "3. Unfavorite a book\n"
 		<< "4. Test connection to the site\n"
-		<< "5. Nothing\n";
+		<< "5. Return to previous menu\n"
+		<< "1...5: ";
+}
+
+void UI::printAfterSearchOptions()
+{
+	std::cout << "You can:\n"
+		<< "1. Look a book description\n"
+		<< "2. Favorite a book\n"
+		<< "3. Return to previous menu\n"
+		<< "1...3: ";
 }
 
 short UI::getUserChoice()
@@ -48,9 +60,13 @@ void UI::printChosenUser(std::string_view username)
 {
 	std::cout << "Now chosen ";
 	if (username.empty())
+	{
 		std::cout << "guest";
+	}
 	else
+	{
 		std::cout << username;
+	}
 }
 
 void UI::printUsers(const std::vector<std::string_view>& users)
@@ -58,7 +74,9 @@ void UI::printUsers(const std::vector<std::string_view>& users)
 	std::cout << "Choose guest user, a user name or create new one:";
 	std::cout << "\n1. Guest";
 	for (int i{}; i < users.size(); ++i)
+	{
 		std::cout << "\n" << i + 2 << ". " << users[i];
+	}
 	std::cout << "\n";
 }
 
@@ -72,7 +90,9 @@ void UI::printBooks(const std::vector<Book>& books)
 			{
 				std::string authorsS;
 				for (auto author : authorsV)
+				{
 					authorsS = authorsS + ", " + author;
+				}
 				return authorsS;
 			}(books[book].getAuthor())
 			<< ") in "
@@ -80,11 +100,18 @@ void UI::printBooks(const std::vector<Book>& books)
 			{
 				std::string langsS;
 				for (auto lang : langsV)
+				{
 					langsS = langsS + "," + lang;
+				}
 				return langsS;
 			}(books[book].getLanguage())
 			<< " - " << books[book].getLink() << "\n";
 	}
+}
+
+void UI::printBookDescription(std::string_view description)
+{
+	std::cout << description << "\n";
 }
 
 void UI::systemMessage(const Engine::ResponseCode response)
@@ -111,8 +138,8 @@ void UI::systemMessage(const Engine::ResponseCode response)
 	case Engine::ResponseCode::InvalidInput:
 		std::cout << "Invalid input\n";
 		return;
-	case Engine::ResponseCode::GuestFavoriteBook:
-		std::cout << "Guests are not allowed to add, delete or have their own favorite books\n";
+	case Engine::ResponseCode::GuestFavoriteOrRecentlyBook:
+		std::cout << "Guests are not allowed to add, delete or have their own favorite or recently books\n";
 		return;
 	}
 }
@@ -135,7 +162,9 @@ void UI::changeLanguageSearch(Engine::SearchParams& sParams)
 		std::cout << "\nEnter the language name in English or leave the field blank to end editing language parameter: ";
 		std::cin >> newLang;
 		if (LangStorage::language.find(newLang) != LangStorage::language.end())
+		{
 			sParams.langs.push_back(LangStorage::language[newLang]);
+		}
 		std::cout << "\n";
 	}
 }
@@ -202,7 +231,9 @@ void UI::changeSearchParams(const std::string& username, Engine::SearchParams& s
 	std::cout << "\n";
 	
 	if (choice != 'Y')
+	{
 		return;
+	}
 	while (true)
 	{
 		std::cout << "What do you want to change:\n1. Author\n2. Language\n3. Title\n4. Year\n5. Sort mode\n6. Size of search result list\n7. Nothing\n1...7: ";
@@ -243,7 +274,9 @@ void UI::printSearchParams(const Engine::SearchParams& sParams)
 			{
 				std::string authorsStr;
 				for (auto author : authors)
+				{
 					authorsStr = authorsStr + " " + author;
+				}
 				return authorsStr;
 			}(sParams.authors))
 		<< "\nLanguage: " << (sParams.langs.empty() ? "any" :
@@ -251,7 +284,9 @@ void UI::printSearchParams(const Engine::SearchParams& sParams)
 			{
 				std::string langsStr;
 				for (auto lang : langs)
+				{
 					langsStr = langsStr + " " + lang;
+				}
 				return langsStr;
 			}(sParams.langs))
 		<< "\nTitle: " << (sParams.title.empty() ? "any" : sParams.title)
@@ -275,7 +310,7 @@ void UI::printSearchParams(const Engine::SearchParams& sParams)
 				return "relevant";
 			}
 		}(sParams.sort)
-			<< "\nSearch results list size: " << sParams.resListSize << "\n";
+		<< "\nSearch results list size: " << sParams.resListSize << "\n";
 }
 
 Engine::SearchParams UI::specifyingRandomSearchParams()
@@ -285,7 +320,7 @@ Engine::SearchParams UI::specifyingRandomSearchParams()
 	std::string input;
 	while (true)
 	{
-		std::cout << "Do you want to specify some search parameters?\n1. Yes\n2. No\n";
+		std::cout << "Do you want to specify some search parameters?\n1.Yes\n2.No\n";
 		std::cin >> choice;
 		if (choice == 1)
 		{
@@ -314,7 +349,9 @@ Engine::SearchParams UI::specifyingRandomSearchParams()
 			std::cout << "\n";
 		}
 		else
+		{
 			return sParams;
+		}
 	}
 }
 
@@ -322,7 +359,46 @@ void UI::printTestConnectionRes(const long status)
 {
 	std::cout << "Trying to connect to https://openlibrary.org/...\n";
 	if (status == 200)
+	{
 		std::cout << "Connection successfull\n";
+	}
 	else
+	{
 		std::cout << "Failed to connect to https://openlibrary.org/. Error: " << status << "\n";
+	}
+}
+
+void UI::lookBookDescriptionFromSearch(std::string_view username, std::vector<Book> books)
+{
+	short bookNumber{};
+	std::cout << "Choose from book list above one of them to look the description: ";
+	std::cin >> bookNumber;
+	std::cout << "\n";
+	UI::printBookDescription(Engine::getBookDescription(books.at(bookNumber).getLink()));
+	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber)));
+}
+
+void UI::favoriteBookFromSearch(std::string_view username, std::vector<Book> books)
+{
+	short bookNumber{};
+	std::cout << "Choose from book list above one of them to favorite: ";
+	std::cin >> bookNumber;
+	std::cout << "\n";
+	UI::systemMessage(Engine::addFavoriteBook(username, books.at(bookNumber)));
+	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber)));
+}
+
+void UI::favoriteRandomBook(std::string_view username, Book book)
+{
+	char choice{};
+	std::cout << "Do you want to favorite the book (Y/N)?\n";
+	std::cin >> choice;
+	std::cout << "\n";
+
+	if (choice != 'Y')
+	{
+		return;
+	}
+	UI::systemMessage(Engine::addFavoriteBook(username, book));
+	UI::systemMessage(Engine::addRecentlyBook(username, book));
 }

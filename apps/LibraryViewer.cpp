@@ -13,6 +13,7 @@ int main()
 
 	UI::firstMessage();
 	UI::printTestConnectionRes(Engine::testConnection());
+	std::vector<Book> books{};
 	while (true)
 	{
 		UI::printOptions();
@@ -29,13 +30,30 @@ int main()
 			UI::printSearchParams(sParams);
 			UI::changeSearchParams(user, sParams);
 			UI::systemMessage(Engine::saveSearchParams(user, sParams));
-			UI::printBooks(Engine::search(sParams));
+			books = Engine::search(sParams);
+			UI::printBooks(books);
+			UI::printAfterSearchOptions();
+			for (short choice{ UI::getUserChoice() }; choice != 3; choice = UI::getUserChoice())
+			{
+				switch (choice)
+				{
+				case 1:
+					UI::lookBookDescriptionFromSearch(user, books);
+					break;
+				case 2:
+					UI::favoriteBookFromSearch(user, books);
+					break;
+				}
+			}
 			break;
-			// TODO: create option to look book in more details
 		case 4: // Search randomly
-			Engine::randomSearch(UI::specifyingRandomSearchParams());
+			books.clear();
+			books.push_back(Engine::randomSearch(UI::specifyingRandomSearchParams()));
+			UI::printBooks(books);
+			UI::printBookDescription(Engine::getBookDescription(books[0].getLink()));
+			UI::systemMessage(Engine::addRecentlyBook(user, books[0]));
+			UI::favoriteRandomBook(user, books[0]);
 			break;
-			// TODO: create option to look book in more details
 		case 5: // Choose user
 			UI::printChosenUser(user);
 			UI::printUsers(Engine::getUsers());
@@ -44,6 +62,7 @@ int main()
 		case 6: // Create user
 			user = UI::getNewUsername();
 			UI::systemMessage(Engine::createUser(user));
+			break;
 		case 7: // Special options
 			UI::printSpecialOptions();
 			switch (UI::getUserChoice())
@@ -64,6 +83,7 @@ int main()
 			case 5: // Nothing
 				break;
 			}
+			break;
 		case 8: // Exit
 			return 0;
 		}

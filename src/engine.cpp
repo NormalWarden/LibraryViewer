@@ -184,7 +184,7 @@ Engine::ResponseCode Engine::addFavoriteBook(std::string_view username, Book boo
 
 	if (username.empty())
 	{
-		return ResponseCode::GuestFavoriteBook;
+		return ResponseCode::GuestFavoriteOrRecentlyBook;
 	}
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
@@ -212,7 +212,7 @@ Engine::ResponseCode Engine::deleteFavoriteBook(std::string_view username, const
 
 	if (username.empty())
 	{
-		return ResponseCode::GuestFavoriteBook;
+		return ResponseCode::GuestFavoriteOrRecentlyBook;
 	}
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
@@ -266,7 +266,7 @@ Engine::ResponseCode Engine::addRecentlyBook(std::string_view username, Book boo
 
 	if (username.empty())
 	{
-		return ResponseCode::GuestFavoriteBook;
+		return ResponseCode::GuestFavoriteOrRecentlyBook;
 	}
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
@@ -294,7 +294,7 @@ Engine::ResponseCode Engine::deleteRecentlyBook(std::string_view username, const
 
 	if (username.empty())
 	{
-		return ResponseCode::GuestFavoriteBook;
+		return ResponseCode::GuestFavoriteOrRecentlyBook;
 	}
 	for (int i{}; i < userdata["users"].size(); ++i)
 	{
@@ -316,6 +316,10 @@ std::string Engine::getBookDescription(std::string_view link)
 	
 	cpr::Response r = cpr::Get(cpr::Url{ link },
 		cpr::VerifySsl{ false });
+	if (r.status_code != 200) // Bad link
+	{
+		return "";
+	}
 	std::string description;
 	if (r.text.find("<ol-read-more class=\"book-description\" more-text=\"Read More\" less-text=\"Read Less\">") != std::string::npos &&
 		r.text.find("</ol-read-more>") != std::string::npos)
@@ -395,11 +399,19 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 		}
 	}
 
+	std::vector<Book> books;
+	if (cprParams.GetContent().empty())
+	{
+		return books;
+	}
 	cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
 		cprParams,
 		cpr::VerifySsl{ false });
+	if (r.status_code != 200) // Bad params or connection
+	{
+		return books;
+	}
 	json response{ json::parse(r.text) };
-	std::vector<Book> books;
 	Book book;
 	for (int i{}; i < sParams.resListSize; ++i)
 	{
@@ -479,28 +491,26 @@ Book Engine::randomSearch(const SearchParams& sParams)
 		}
 	}
 
-	// Search
 	cpr::Response r = cpr::Get(cpr::Url{ "https://openlibrary.org/search.json" },
 		cprParams,
 		cpr::VerifySsl{ false });
+	if (r.status_code != 200) // Bad params or connection
+	{
+		return Book();
+	}
 	json response{ json::parse(r.text) };
-	
-	// Random number
-	std::random_device rd;
-	std::mt19937 rng{ rd() };
-	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,99 }; // Site search response contains 100 books
-	size_t randNumber{ uid(rng) };
+	int num = randBookNumber();
 
-	return Book(response["docs"][randNumber]["author_name"],
-		response["docs"][randNumber]["language"],
-		response["docs"][randNumber]["title"],
+	return Book(response["docs"][num]["author_name"],
+		response["docs"][num]["language"],
+		response["docs"][num]["title"],
 		[](const json& response, const int& iter)->std::string
 		{
 			std::string link{ "https://openlibrary.org" + response["docs"][iter]["key"].get<std::string>() + "/" + response["docs"][iter]["title"].get<std::string>() };
 			std::replace(begin(link), end(link), ' ', '_');
 			return link;
-		}(response, randNumber),
-		response["docs"][randNumber]["first_publish_year"]);
+		}(response, num),
+		response["docs"][num]["first_publish_year"]);
 }
 
 Engine::ResponseCode Engine::getSearchParams(std::string_view username, SearchParams& sParams)
@@ -564,4 +574,12 @@ Engine::ResponseCode Engine::saveSearchParams(std::string_view username, const S
 		}
 	}
 	return ResponseCode::NoUser;
+}
+
+int Engine::randBookNumber()
+{
+	std::random_device rd;
+	std::mt19937 rng{ rd() };
+	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,99 }; // Site search response contains 100 books
+	return (int)uid(rng);
 }
