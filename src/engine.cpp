@@ -160,7 +160,7 @@ std::vector<Book> Engine::getFavoriteBooks(std::string_view username)
 	{
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
-			for (int j{}; j < userdata["users"][i]["favoriteBooks"].size(); ++i)
+			for (int j{}; j < userdata["users"][i]["favoriteBooks"].size(); ++j)
 			{
 				books.push_back(Book(userdata["users"][i]["favoriteBooks"][j]["author"],
 					userdata["users"][i]["favoriteBooks"][j]["language"],
@@ -242,7 +242,7 @@ std::vector<Book> Engine::getRecentlyBooks(std::string_view username)
 	{
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
-			for (int j{}; j < userdata["users"][i]["recentlyBooks"].size(); ++i)
+			for (int j{}; j < userdata["users"][i]["recentlyBooks"].size(); ++j)
 			{
 				books.push_back(Book(userdata["users"][i]["recentlyBooks"][j]["author"],
 					userdata["users"][i]["recentlyBooks"][j]["language"],
@@ -381,7 +381,10 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 	{
 		for (auto lang : sParams.langs)
 		{
-			cprParams.Add({ "language", lang });
+			if (LangStorage::language.find(lang) != LangStorage::language.end())
+			{
+				cprParams.Add({ "language", LangStorage::language[lang] });
+			}
 		}
 	}
 	if (sParams.sort != Sort::None)
@@ -416,7 +419,7 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 		return books;
 	}
 	json response{ json::parse(r.text) };
-	Book book;
+	Book book{};
 	for (int i{}; i < sParams.resListSize; ++i)
 	{
 		if (i < response["docs"].size())
@@ -425,17 +428,9 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 			{
 				book.setAuthor(response["docs"][i]["author_name"]);
 			}
-			else
-			{
-				book.setAuthor({});
-			}
 			if (response["docs"][i].contains("language"))
 			{
 				book.setLanguage(response["docs"][i]["language"]);
-			}
-			else
-			{
-				book.setLanguage({});
 			}
 			if (response["docs"][i].contains("title"))
 			{
@@ -449,23 +444,10 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 						return link;
 					}(response, i));
 				}
-				else
-				{
-					book.setLink("");
-				}
-			}
-			else
-			{
-				book.setTitle("");
-				book.setLink("");
 			}
 			if (response["docs"][i].contains("first_publish_year"))
 			{
 				book.setYear(response["docs"][i]["first_publish_year"]);
-			}
-			else
-			{
-				book.setYear(0);
 			}
 			books.push_back(book);
 		}
@@ -493,7 +475,10 @@ Book Engine::randomSearch(const SearchParams& sParams)
 	{
 		for (auto lang : sParams.langs)
 		{
-			cprParams.Add({ "language", lang });
+			if (LangStorage::language.find(lang) != LangStorage::language.end())
+			{
+				cprParams.Add({ "language", LangStorage::language[lang] });
+			}
 		}
 	}
 
@@ -505,18 +490,35 @@ Book Engine::randomSearch(const SearchParams& sParams)
 		return Book();
 	}
 	json response{ json::parse(r.text) };
-	int num = randBookNumber();
-
-	return Book(response["docs"][num]["author_name"],
-		response["docs"][num]["language"],
-		response["docs"][num]["title"],
-		[](const json& response, const int& iter)->std::string
+	int num = randBookNumber(response["docs"].size());
+	
+	Book book{};
+	if (response["docs"][num].contains("author_name"))
+	{
+		book.setAuthor(response["docs"][num]["author_name"]);
+	}
+	if (response["docs"][num].contains("language"))
+	{
+		book.setLanguage(response["docs"][num]["language"]);
+	}
+	if (response["docs"][num].contains("title"))
+	{
+		book.setTitle(response["docs"][num]["title"]);
+		if (response["docs"][num].contains("key"))
 		{
-			std::string link{ "https://openlibrary.org" + response["docs"][iter]["key"].get<std::string>() + "/" + response["docs"][iter]["title"].get<std::string>() };
-			std::replace(begin(link), end(link), ' ', '_');
-			return link;
-		}(response, num),
-		response["docs"][num]["first_publish_year"]);
+			book.setLink([](const json& response, const int& iter)->std::string
+			{
+				std::string link{ "https://openlibrary.org" + response["docs"][iter]["key"].get<std::string>() + "/" + response["docs"][iter]["title"].get<std::string>() };
+				std::replace(begin(link), end(link), ' ', '_');
+				return link;
+			}(response, num));
+		}
+	}
+	if (response["docs"][num].contains("first_publish_year"))
+	{
+		book.setYear(response["docs"][num]["first_publish_year"]);
+	}
+	return book;
 }
 
 Engine::ResponseCode Engine::getSearchParams(std::string_view username, SearchParams& sParams)
@@ -582,10 +584,31 @@ Engine::ResponseCode Engine::saveSearchParams(std::string_view username, const S
 	return ResponseCode::NoUser;
 }
 
-int Engine::randBookNumber()
+int Engine::randBookNumber(unsigned int maxNum)
 {
 	std::random_device rd;
 	std::mt19937 rng{ rd() };
-	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,99 }; // Site search response contains 100 books
+	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,maxNum }; // Site search response contains 100 books
 	return (int)uid(rng);
+}
+
+Engine::ResponseCode Engine::isRandomBookEmpty(Book book)
+{
+	if (book.getAuthor().empty())
+	{
+		if (book.getLanguage().empty())
+		{
+			if (book.getTitle().empty())
+			{
+				if (book.getLink().empty())
+				{
+					if (!book.getYear())
+					{
+						return ResponseCode::EmptyRandomBook;
+					}
+				}
+			}
+		}
+	}
+	return ResponseCode::Ok;
 }

@@ -55,10 +55,14 @@ int main()
 			UI::printRandomSearchParams(sParams);
 			books.clear();
 			books.push_back(Engine::randomSearch(UI::specifyingRandomSearchParams()));
-			UI::printBooks(books);
-			UI::printBookDescription(Engine::getBookDescription(books[0].getLink()));
-			UI::systemMessage(Engine::addRecentlyBook(user, books[0]));
-			UI::favoriteRandomBook(user, books[0]);
+			if (Engine::isRandomBookEmpty(books[0]) != Engine::ResponseCode::EmptyRandomBook)
+			{
+				UI::printBooks(books);
+				UI::printBookDescription(Engine::getBookDescription(books[0].getLink()));
+				UI::systemMessage(Engine::addRecentlyBook(user, books[0]));
+				UI::favoriteRandomBook(user, books[0]);
+			}
+			UI::systemMessage(Engine::isRandomBookEmpty(books[0]));
 			break;
 		case 5: // Choose user
 			UI::printChosenUser(user);

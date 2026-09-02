@@ -91,28 +91,49 @@ void UI::printBooks(const std::vector<Book>& books)
 	}
 	for (int book{}; book < books.size(); ++book)
 	{
-		std::cout << book + 1 << ". " << books[book].getTitle()
-			<< "(" << books[book].getYear() << ", "
+		if (books.size() != 1)
+		{
+			std::cout << book + 1 << ". ";
+		}
+		std::cout << (books[book].getTitle().empty() ? "No title" : books[book].getTitle())
+			<< "(" << (books[book].getYear() == 0 ? "no publish year" : std::to_string(books[book].getYear()))
+			<< ", "
 			<< [](const std::vector<std::string>& authorsV)->std::string
 			{
-				std::string authorsS;
-				for (auto author : authorsV)
+				if (authorsV.empty())
 				{
-					authorsS = authorsS + ", " + author;
+					return "no authors";
 				}
+				std::string authorsS;
+				if (authorsV.size() == 1)
+				{
+					return authorsV[0];
+				}
+				for (int author{}; author < authorsV.size() - 1; ++author)
+				{
+					authorsS = author + ", ";
+				}
+				authorsS += authorsV.back();
 				return authorsS;
 			}(books[book].getAuthor())
 			<< ") in "
 			<< [](const std::vector<std::string>& langsV)->std::string
 			{
-				std::string langsS;
-				for (auto lang : langsV)
+				if (langsV.empty())
 				{
-					langsS = langsS + "," + lang;
+					return "no languages";
 				}
+				std::string langsS;
+				for (int lang{}; lang < langsV.size() - 1; ++lang)
+				{
+					langsS = lang + ", ";
+				}
+				langsS += langsV.back();
 				return langsS;
 			}(books[book].getLanguage())
-			<< " - " << books[book].getLink() << "\n";
+			<< " - " 
+			<< (books[book].getLink().empty() ? "failed to get link" : books[book].getLink())
+			<< "\n";
 	}
 }
 
@@ -168,6 +189,9 @@ void UI::systemMessage(const Engine::ResponseCode response)
 	case Engine::ResponseCode::GuestFavoriteOrRecentlyBook:
 		std::cout << "Guests are not allowed to add, delete or have their own favorite or recently books\n";
 		return;
+	case Engine::ResponseCode::EmptyRandomBook:
+		std::cout << "Failed to search random book\n";
+		return;
 	}
 }
 
@@ -198,10 +222,7 @@ void UI::changeLanguageSearch(Engine::SearchParams& sParams)
 		{
 			break;
 		}
-		if (LangStorage::language.find(newLang) != LangStorage::language.end())
-		{
-			sParams.langs.push_back(LangStorage::language[newLang]);
-		}
+		sParams.langs.push_back(newLang);
 	}
 }
 
@@ -317,24 +338,30 @@ void UI::printSearchParams(const Engine::SearchParams& sParams)
 {
 	std::cout << "Search params:"
 		<< "\nAuthor: " << (sParams.authors.empty() ? "any" :
-			[](const std::vector<std::string>& authors)->std::string
+			[](const std::vector<std::string>& authorsV)->std::string
 			{
-				std::string authorsStr;
-				for (auto author : authors)
+				std::string authorsS;
+				if (authorsV.size() == 1)
 				{
-					authorsStr = authorsStr + " " + author;
+					return authorsV[0];
 				}
-				return authorsStr;
+				for (int author{}; author < authorsV.size() - 1; ++author)
+				{
+					authorsS = author + ", ";
+				}
+				authorsS += authorsV.back();
+				return authorsS;
 			}(sParams.authors))
 		<< "\nLanguage: " << (sParams.langs.empty() ? "any" :
-			[](const std::vector<std::string>& langs)->std::string
+			[](const std::vector<std::string>& langsV)->std::string
 			{
-				std::string langsStr;
-				for (auto lang : langs)
+				std::string langsS;
+				for (int lang{}; lang < langsV.size() - 1; ++lang)
 				{
-					langsStr = langsStr + " " + lang;
+					langsS = lang + ", ";
 				}
-				return langsStr;
+				langsS += langsV.back();
+				return langsS;
 			}(sParams.langs))
 		<< "\nTitle: " << (sParams.title.empty() ? "any" : sParams.title)
 		<< "\nPublish year: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
@@ -364,24 +391,30 @@ void UI::printRandomSearchParams(const Engine::SearchParams& sParams)
 {
 	std::cout << "Search params:"
 		<< "\nAuthor: " << (sParams.authors.empty() ? "any" :
-			[](const std::vector<std::string>& authors)->std::string
+			[](const std::vector<std::string>& authorsV)->std::string
 			{
-				std::string authorsStr;
-				for (auto author : authors)
+				std::string authorsS;
+				if (authorsV.size() == 1)
 				{
-					authorsStr = authorsStr + " " + author;
+					return authorsV[0];
 				}
-				return authorsStr;
+				for (int author{}; author < authorsV.size() - 1; ++author)
+				{
+					authorsS = author + ", ";
+				}
+				authorsS += authorsV.back();
+				return authorsS;
 			}(sParams.authors))
 		<< "\nLanguage: " << (sParams.langs.empty() ? "any" :
-			[](const std::vector<std::string>& langs)->std::string
+			[](const std::vector<std::string>& langsV)->std::string
 			{
-				std::string langsStr;
-				for (auto lang : langs)
+				std::string langsS;
+				for (int lang{}; lang < langsV.size() - 1; ++lang)
 				{
-					langsStr = langsStr + " " + lang;
+					langsS = lang + ", ";
 				}
-				return langsStr;
+				langsS += langsV.back();
+				return langsS;
 			}(sParams.langs))
 		<< "\nPublish year: " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
 		<< "\n";
@@ -458,5 +491,4 @@ void UI::favoriteRandomBook(std::string_view username, Book book)
 		return;
 	}
 	UI::systemMessage(Engine::addFavoriteBook(username, book));
-	UI::systemMessage(Engine::addRecentlyBook(username, book));
 }
