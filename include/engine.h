@@ -67,7 +67,8 @@ enum class Engine::ResponseCode
 	CreatingIdenticalUser,
 	InvalidInput,
 	GuestFavoriteOrRecentlyBook,
-	EmptyRandomBook
+	EmptyRandomBook,
+	MaxCountOfFavoriteBooks
 };
 
 enum class Engine::Sort

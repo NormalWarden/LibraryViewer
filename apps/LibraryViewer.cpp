@@ -39,7 +39,6 @@ int main()
 			UI::printAfterSearchOptions();
 			for (short choice{ UI::getUserChoice() }; choice != 3; choice = UI::getUserChoice())
 			{
-				UI::printAfterSearchOptions();
 				switch (choice)
 				{
 				case 1:
@@ -49,6 +48,7 @@ int main()
 					UI::favoriteBookFromSearch(user, books);
 					break;
 				}
+				UI::printAfterSearchOptions();
 			}
 			break;
 		case 4: // Search randomly

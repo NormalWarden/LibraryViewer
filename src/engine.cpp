@@ -190,6 +190,10 @@ Engine::ResponseCode Engine::addFavoriteBook(std::string_view username, Book boo
 	{
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
+			if (userdata["users"][i]["favoriteBooks"].size() == 5)
+			{
+				return ResponseCode::MaxCountOfFavoriteBooks;
+			}
 			userdata["users"][i]["favoriteBooks"].push_back({
 				{"author", book.getAuthor()},
 				{"language", book.getLanguage()},
@@ -278,7 +282,7 @@ Engine::ResponseCode Engine::addRecentlyBook(std::string_view username, Book boo
 				{"title", book.getTitle()},
 				{"year", book.getYear()},
 				{"link", book.getLink()}});
-			while (userdata["users"][i]["recentlyBooks"].size() >= 5)
+			while (userdata["users"][i]["recentlyBooks"].size() >= 6)
 			{
 				userdata["users"][i]["recentlyBooks"].erase(0);
 			}
@@ -355,6 +359,7 @@ std::string Engine::getBookDescription(std::string_view link)
 
 std::vector<Book> Engine::search(const SearchParams& sParams)
 {
+	std::vector<Book> books;
 	cpr::Parameters cprParams;
 	if (!sParams.title.empty())
 	{
@@ -365,6 +370,10 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 				std::replace(begin(correctTitle), end(correctTitle), ' ', '+');
 				return correctTitle;
 			}(sParams.title) });
+	}
+	else
+	{
+		return books; // To search books without title use random search
 	}
 	if (sParams.year != 0)
 	{
@@ -406,11 +415,6 @@ std::vector<Book> Engine::search(const SearchParams& sParams)
 		}
 	}
 
-	std::vector<Book> books;
-	if (cprParams.GetContent().empty())
-	{
-		return books;
-	}
 	cpr::Response r = cpr::Get(cpr::Url{"https://openlibrary.org/search.json"},
 		cprParams,
 		cpr::VerifySsl{ false });
