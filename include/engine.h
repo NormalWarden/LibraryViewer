@@ -1,8 +1,5 @@
 #pragma once
 
-#define USER_NOT_SELECTED 0
-#define USER_SELECTED 1
-
 #include <fstream>
 #include <vector>
 #include <string>
@@ -13,11 +10,9 @@
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
-#include "book.h"
 #include "language.h"
 #include "jsonTemplates.h"
 
-using json = nlohmann::json;
 
 namespace Engine
 {
@@ -25,23 +20,24 @@ namespace Engine
 	enum class ResponseCode;
 	enum class Sort;
 	struct SearchParams;
+	struct Book;
 
 	long testConnection();
 	ResponseCode recreateFile(std::string_view fileTemplate = JSONTemplates::startTemplate);
-	ResponseCode fileToJSON(json& userdata);
-	ResponseCode JSONToFile(const json& userdata);
+	ResponseCode fileToJSON(nlohmann::json& userdata);
+	ResponseCode JSONToFile(const nlohmann::json& userdata);
 
 	std::vector<std::string> getUsers();
-	ResponseCode createUser(std::string& username);
+	ResponseCode createUser(const std::string& username);
 	ResponseCode chooseUser(std::string& username, const short choice);
 	ResponseCode deleteUser(std::string& username);
 
 	std::vector<Book> getFavoriteBooks(std::string_view username);
-	ResponseCode addFavoriteBook(std::string_view username, Book book);
+	ResponseCode addFavoriteBook(std::string_view username, const Book& book);
 	ResponseCode deleteFavoriteBook(std::string_view username, const short bookNumber);
 	
 	std::vector<Book> getRecentlyBooks(std::string_view username);
-	ResponseCode addRecentlyBook(std::string_view username, Book book);
+	ResponseCode addRecentlyBook(std::string_view username, const Book& book);
 	ResponseCode deleteRecentlyBook(std::string_view username, const short bookNumber);
 
 	std::string getBookDescription(std::string_view link);
@@ -52,8 +48,11 @@ namespace Engine
 	ResponseCode getSearchParams(std::string_view username, SearchParams& sParams);
 	ResponseCode saveSearchParams(std::string_view username, const SearchParams& sParams);
 
+	// Functions-helpers
 	int randBookNumber(unsigned int maxNum);
-	ResponseCode isRandomBookEmpty(Book book);
+	ResponseCode isRandomBookEmpty(const Book& book);
+	std::string	transformStrToURL(std::string_view str);
+	std::string	makeLinkFromResponse(const nlohmann::json& response, int bookNumber);
 }
 
 enum class Engine::ResponseCode
@@ -88,4 +87,13 @@ struct Engine::SearchParams
 	size_t year{};
 	Sort sort = Sort::None;
 	size_t resListSize = 10;
+};
+
+struct Engine::Book
+{
+	std::vector<std::string> author;
+	std::vector<std::string> language;
+	std::string title;
+	std::string link;
+	size_t year;
 };

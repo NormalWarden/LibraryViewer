@@ -5,8 +5,9 @@
 #include <vector>
 #include <string>
 #include "engine.h"
-#include "book.h"
 #include "jsonTemplates.h"
+
+using json = nlohmann::json;
 
 
 std::string fileToString()
@@ -228,22 +229,22 @@ TEST(EngineTest, AddFavoriteBook_Ok)
 	Engine::recreateFile();
 	std::string username = "new";
 	Engine::createUser(username);
-	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
-	std::vector<Book> booksVTemplate{ favoriteBook };
+	Engine::Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+	std::vector<Engine::Book> booksVTemplate{ favoriteBook };
 
 	ASSERT_EQ(Engine::addFavoriteBook(username, favoriteBook), Engine::ResponseCode::Ok);
 	EXPECT_EQ(Engine::getFavoriteBooks(username).size(), 1);
-	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getAuthor(), favoriteBook.getAuthor());
-	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getLanguage(), favoriteBook.getLanguage());
-	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getTitle(), favoriteBook.getTitle());
-	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getLink(), favoriteBook.getLink());
-	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].getYear(), favoriteBook.getYear());
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].author, favoriteBook.author);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].language, favoriteBook.language);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].title, favoriteBook.title);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].link, favoriteBook.link);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].year, favoriteBook.year);
 }
 
 TEST(EngineTest, AddFavoriteBook_GuestFavoriteOrRecentlyBook)
 {
 	Engine::filename = "test.txt";
-	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+	Engine::Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
 	ASSERT_EQ(Engine::addFavoriteBook("", favoriteBook), Engine::ResponseCode::GuestFavoriteOrRecentlyBook);
 	ASSERT_EQ(Engine::getFavoriteBooks("").size(), 0);
@@ -253,7 +254,7 @@ TEST(EngineTest, AddFavoriteBook_NoUser)
 {
 	Engine::filename = "test.txt";
 	Engine::recreateFile();
-	Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+	Engine::Book favoriteBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
 	ASSERT_EQ(Engine::addFavoriteBook("user", favoriteBook), Engine::ResponseCode::NoUser);
 	ASSERT_EQ(Engine::getFavoriteBooks("user").size(), 0);
@@ -317,21 +318,21 @@ TEST(EngineTest, AddRecentlyBook_Ok)
 	Engine::recreateFile();
 	std::string username = "new";
 	Engine::createUser(username);
-	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+	Engine::Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
 	ASSERT_EQ(Engine::addRecentlyBook(username, recentlyBook), Engine::ResponseCode::Ok);
 	EXPECT_EQ(Engine::getRecentlyBooks(username).size(), 1);
-	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getAuthor(), recentlyBook.getAuthor());
-	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getLanguage(), recentlyBook.getLanguage());
-	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getTitle(), recentlyBook.getTitle());
-	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getLink(), recentlyBook.getLink());
-	EXPECT_EQ(Engine::getRecentlyBooks(username)[0].getYear(), recentlyBook.getYear());
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].author, recentlyBook.author);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].language, recentlyBook.language);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].title, recentlyBook.title);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].link, recentlyBook.link);
+	EXPECT_EQ(Engine::getFavoriteBooks(username)[0].year, recentlyBook.year);
 }
 
 TEST(EngineTest, AddRecentlyBook_GuestFavoriteOrRecentlyBook)
 {
 	Engine::filename = "test.txt";
-	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+	Engine::Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
 	ASSERT_EQ(Engine::addRecentlyBook("", recentlyBook), Engine::ResponseCode::GuestFavoriteOrRecentlyBook);
 	ASSERT_EQ(Engine::getRecentlyBooks("").size(), 0);
@@ -341,7 +342,7 @@ TEST(EngineTest, AddRecentlyBook_NoUser)
 {
 	Engine::filename = "test.txt";
 	Engine::recreateFile();
-	Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
+	Engine::Book recentlyBook{ {"Author"}, {"Language"}, "Title", "Link", 2000 };
 
 	ASSERT_EQ(Engine::addRecentlyBook("user", recentlyBook), Engine::ResponseCode::NoUser);
 	ASSERT_EQ(Engine::getRecentlyBooks("user").size(), 0);
@@ -395,29 +396,29 @@ TEST(EngineTest, Search)
 {
 	Engine::SearchParams sParams{ {}, {}, "The lord of the rings", 0, Engine::Sort::None, 100 };
 	long connectionStatus{ Engine::testConnection() };
-	std::vector<Book> books = Engine::search(sParams);
+	std::vector<Engine::Book> books = Engine::search(sParams);
 
 	EXPECT_EQ(connectionStatus, 200);
 	ASSERT_EQ(books.size(), 100);
-	ASSERT_EQ(books[0].getAuthor().empty(), false);
-	ASSERT_EQ(books[0].getLanguage().empty(), false);
-	ASSERT_EQ(books[0].getTitle().empty(), false);
-	ASSERT_NE(books[0].getYear(), 0);
-	ASSERT_EQ(books[0].getLink().empty(), false);
+	ASSERT_EQ(books[0].author.empty(), false);
+	ASSERT_EQ(books[0].language.empty(), false);
+	ASSERT_EQ(books[0].title.empty(), false);
+	ASSERT_NE(books[0].year, 0);
+	ASSERT_EQ(books[0].link.empty(), false);
 }
 
 TEST(EngineTest, RandomSearch)
 {
 	Engine::SearchParams sParams{ {"J.R.R. Tolkien"}, {}, "The lord of the rings", 0, Engine::Sort::None, 100 };
 	long connectionStatus{ Engine::testConnection() };
-	Book book{ Engine::randomSearch(sParams) };
+	Engine::Book book{ Engine::randomSearch(sParams) };
 
 	EXPECT_EQ(connectionStatus, 200);
-	ASSERT_EQ(book.getAuthor().empty(), false);
-	ASSERT_EQ(book.getLanguage().empty(), false);
-	ASSERT_EQ(book.getTitle().empty(), false);
-	ASSERT_NE(book.getYear(), 0);
-	ASSERT_EQ(book.getLink().empty(), false);
+	ASSERT_EQ(book.author.empty(), false);
+	ASSERT_EQ(book.language.empty(), false);
+	ASSERT_EQ(book.title.empty(), false);
+	ASSERT_NE(book.year, 0);
+	ASSERT_EQ(book.link.empty(), false);
 }
 
 

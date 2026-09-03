@@ -4,7 +4,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include "book.h"
 #include "engine.h"
 #include "jsonTemplates.h"
 

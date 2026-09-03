@@ -90,7 +90,7 @@ void UI::printUsers(const std::vector<std::string>& users)
 	std::cout << "\n1..." << users.size() << ": ";
 }
 
-void UI::printBooks(const std::vector<Book>& books)
+void UI::printBooks(const std::vector<Engine::Book>& books)
 {
 	if (books.empty())
 	{
@@ -103,45 +103,11 @@ void UI::printBooks(const std::vector<Book>& books)
 		{
 			std::cout << book + 1 << ". ";
 		}
-		std::cout << (books[book].getTitle().empty() ? "No title" : books[book].getTitle())
-			<< "(" << (books[book].getYear() == 0 ? "no publish year" : std::to_string(books[book].getYear()))
-			<< ", "
-			<< [](const std::vector<std::string>& authorsV)->std::string
-			{
-				if (authorsV.empty())
-				{
-					return "no authors";
-				}
-				std::string authorsS;
-				if (authorsV.size() == 1)
-				{
-					return authorsV[0];
-				}
-				for (int author{}; author < authorsV.size() - 1; ++author)
-				{
-					authorsS = authorsV[author] + ", ";
-				}
-				authorsS += authorsV.back();
-				return authorsS;
-			}(books[book].getAuthor())
-			<< ") in "
-			<< [](const std::vector<std::string>& langsV)->std::string
-			{
-				if (langsV.empty())
-				{
-					return "no languages";
-				}
-				std::string langsS;
-				for (int lang{}; lang < langsV.size() - 1; ++lang)
-				{
-					langsS = langsV[lang] + ", ";
-				}
-				langsS += langsV.back();
-				return langsS;
-			}(books[book].getLanguage())
-			<< " - " 
-			<< (books[book].getLink().empty() ? "failed to get link" : books[book].getLink())
-			<< "\n";
+		std::cout << (books[book].title.empty() ? "No title" : books[book].title)
+			<< "(" << (books[book].year == 0 ? "no publish year" : std::to_string(books[book].year)) << ", " 
+			<< (books[book].author.empty() ? "no authors" : authorsVecToStr(books[book].author)) << ") in "
+			<< (books[book].language.empty() ? "no languages" : languagesVecToStr(books[book].language))
+			<< " - " << (books[book].link.empty() ? "failed to get link" : books[book].link) << "\n";
 	}
 }
 
@@ -384,87 +350,20 @@ void UI::changeSearchParams(const std::string& username, Engine::SearchParams& s
 void UI::printSearchParams(const Engine::SearchParams& sParams)
 {
 	std::cout << "Search params:"
-		<< "\nAuthor - " << (sParams.authors.empty() ? "any" :
-			[](const std::vector<std::string>& authorsV)->std::string
-			{
-				std::string authorsS;
-				if (authorsV.size() == 1)
-				{
-					return authorsV[0];
-				}
-				for (int author{}; author < authorsV.size() - 1; ++author)
-				{
-					authorsS = authorsV[author] + ", ";
-				}
-				authorsS += authorsV.back();
-				return authorsS;
-			}(sParams.authors))
-		<< "\nLanguage - " << (sParams.langs.empty() ? "any" :
-			[](const std::vector<std::string>& langsV)->std::string
-			{
-				std::string langsS;
-				for (int lang{}; lang < langsV.size() - 1; ++lang)
-				{
-					langsS = langsV[lang] + ", ";
-				}
-				langsS += langsV.back();
-				return langsS;
-			}(sParams.langs))
+		<< "\nAuthor - " << (sParams.authors.empty() ? "any" : authorsVecToStr(sParams.authors))
+		<< "\nLanguage - " << (sParams.langs.empty() ? "any" : languagesVecToStr(sParams.langs))
 		<< "\nTitle - " << (sParams.title.empty() ? "any" : sParams.title)
 		<< "\nPublish year - " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
-		<< "\nSort mode - " <<
-		[](const Engine::Sort& sort)->std::string
-		{
-			switch (sort)
-			{
-			case Engine::Sort::None:
-				return "relevant";
-			case Engine::Sort::Editions:
-				return "count of editions";
-			case Engine::Sort::Old:
-				return "old";
-			case Engine::Sort::New:
-				return "new";
-			case Engine::Sort::Rating:
-				return "rating";
-			default:
-				return "relevant";
-			}
-		}(sParams.sort)
+		<< "\nSort mode - " << sortModeToStr(sParams.sort)		
 		<< "\nSearch results list size - " << sParams.resListSize << "\n";
 }
 
 void UI::printRandomSearchParams(const Engine::SearchParams& sParams)
 {
 	std::cout << "Search params:"
-		<< "\nAuthor - " << (sParams.authors.empty() ? "any" :
-			[](const std::vector<std::string>& authorsV)->std::string
-			{
-				std::string authorsS;
-				if (authorsV.size() == 1)
-				{
-					return authorsV[0];
-				}
-				for (int author{}; author < authorsV.size() - 1; ++author)
-				{
-					authorsS = authorsV[author] + ", ";
-				}
-				authorsS += authorsV.back();
-				return authorsS;
-			}(sParams.authors))
-		<< "\nLanguage - " << (sParams.langs.empty() ? "any" :
-			[](const std::vector<std::string>& langsV)->std::string
-			{
-				std::string langsS;
-				for (int lang{}; lang < langsV.size() - 1; ++lang)
-				{
-					langsS = langsV[lang] + ", ";
-				}
-				langsS += langsV.back();
-				return langsS;
-			}(sParams.langs))
-		<< "\nPublish year - " << (sParams.year == 0 ? "any" : std::to_string(sParams.year))
-		<< "\n";
+		<< "\nAuthor - " << (sParams.authors.empty() ? "any" : authorsVecToStr(sParams.authors))
+		<< "\nLanguage - " << (sParams.langs.empty() ? "any" : languagesVecToStr(sParams.langs))
+		<< "\nPublish year - " << (sParams.year == 0 ? "any" : std::to_string(sParams.year)) << "\n";
 }
 
 Engine::SearchParams UI::specifyingRandomSearchParams()
@@ -510,7 +409,7 @@ Engine::SearchParams UI::specifyingRandomSearchParams()
 				break;
 			case 3:
 				std::cout << "Enter the publish year: ";
-				std::cin >> input;
+				std::cin >> sParams.year;
 				if (std::cin.fail())
 				{
 					std::cin.clear();
@@ -519,7 +418,6 @@ Engine::SearchParams UI::specifyingRandomSearchParams()
 					sParams.year = 0;
 					break;
 				}
-				sParams.year = std::stoi(input);
 				break;
 			default:
 				std::cout << "Invalid input\n";
@@ -533,7 +431,7 @@ Engine::SearchParams UI::specifyingRandomSearchParams()
 	}
 }
 
-void UI::lookBookDescriptionFromSearch(std::string_view username, std::vector<Book> books)
+void UI::lookBookDescriptionFromSearch(std::string_view username, const std::vector<Engine::Book>& books)
 {
 	short bookNumber{};
 	std::cout << "Choose from book list above one of them to look the description: ";
@@ -545,11 +443,11 @@ void UI::lookBookDescriptionFromSearch(std::string_view username, std::vector<Bo
 		std::cout << "Invalid input. Defaulting nothing\n";
 		return;
 	}
-	UI::printBookDescription(Engine::getBookDescription(books.at(bookNumber - 1).getLink()));
+	UI::printBookDescription(Engine::getBookDescription(books.at(bookNumber - 1).link));
 	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber - 1)));
 }
 
-void UI::favoriteBookFromSearch(std::string_view username, std::vector<Book> books)
+void UI::favoriteBookFromSearch(std::string_view username, const std::vector<Engine::Book>& books)
 {
 	short bookNumber{};
 	std::cout << "Choose from book list above one of them to favorite: ";
@@ -565,7 +463,7 @@ void UI::favoriteBookFromSearch(std::string_view username, std::vector<Book> boo
 	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber - 1)));
 }
 
-void UI::favoriteRandomBook(std::string_view username, Book book)
+void UI::favoriteRandomBook(std::string_view username, const Engine::Book& book)
 {
 	short choice{};
 	std::cout << "Do you want to favorite the book?\n1.Yes\n2.No\n1..2: ";
@@ -582,4 +480,51 @@ void UI::favoriteRandomBook(std::string_view username, Book book)
 		return;
 	}
 	UI::systemMessage(Engine::addFavoriteBook(username, book));
+}
+
+std::string UI::authorsVecToStr(const std::vector<std::string>& authorsV)
+{
+	std::string authorsS{ authorsV[0] };
+	if (authorsV.size() == 1)
+	{
+		return authorsS;
+	}
+	for (int author{ 1 }; author < authorsV.size(); ++author)
+	{
+		authorsS += ", " + authorsV[author];
+	}
+	return authorsS;
+}
+
+std::string UI::languagesVecToStr(const std::vector<std::string>& langsV)
+{
+	std::string langsS{ langsV[0] };
+	if (langsV.size() == 1)
+	{
+		return langsS;
+	}
+	for (int author{ 1 }; author < langsV.size(); ++author)
+	{
+		langsS += ", " + langsV[author];
+	}
+	return langsS;
+}
+
+std::string UI::sortModeToStr(const Engine::Sort& sort)
+{
+	switch (sort)
+	{
+	case Engine::Sort::None:
+		return "relevant";
+	case Engine::Sort::Editions:
+		return "count of editions";
+	case Engine::Sort::Old:
+		return "old";
+	case Engine::Sort::New:
+		return "new";
+	case Engine::Sort::Rating:
+		return "rating";
+	default:
+		return "relevant";
+	}
 }

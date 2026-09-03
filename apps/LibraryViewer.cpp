@@ -13,7 +13,8 @@ int main()
 
 	UI::firstMessage();
 	UI::printTestConnectionRes(Engine::testConnection());
-	std::vector<Book> books{};
+	std::vector<Engine::Book> books{};
+	std::string deletedUser;
 	while (true)
 	{
 		UI::printOptions();
@@ -58,7 +59,7 @@ int main()
 			if (Engine::isRandomBookEmpty(books[0]) != Engine::ResponseCode::EmptyRandomBook)
 			{
 				UI::printBooks(books);
-				UI::printBookDescription(Engine::getBookDescription(books[0].getLink()));
+				UI::printBookDescription(Engine::getBookDescription(books[0].link));
 				UI::systemMessage(Engine::addRecentlyBook(user, books[0]));
 				UI::favoriteRandomBook(user, books[0]);
 			}
@@ -70,8 +71,12 @@ int main()
 			UI::systemMessage(Engine::chooseUser(user, UI::getUserChoice() - 1));
 			break;
 		case 6: // Create user
-			user = UI::getNewUsername();
-			UI::systemMessage(Engine::createUser(user));
+			if (Engine::ResponseCode transferRes{ Engine::createUser(UI::getNewUsername()) }; transferRes != Engine::ResponseCode::Ok)
+			{
+				UI::systemMessage(transferRes);
+				break;
+			}
+			UI::systemMessage(Engine::chooseUser(user, Engine::getUsers().size() - 1));
 			break;
 		case 7: // Special options
 			UI::printSpecialOptions();
@@ -83,8 +88,12 @@ int main()
 			case 2: // Delete the user
 				UI::printChosenUser(user);
 				UI::printUsers(Engine::getUsers());
-				UI::systemMessage(Engine::chooseUser(user, UI::getUserChoice() - 1));
-				UI::systemMessage(Engine::deleteUser(user));
+				UI::systemMessage(Engine::chooseUser(deletedUser, UI::getUserChoice() - 1));
+				UI::systemMessage(Engine::deleteUser(deletedUser));
+				if (user == deletedUser)
+				{
+					UI::systemMessage(Engine::chooseUser(user, 1)); // Choosing guest if chosen user has been deleted
+				}
 				break;
 			case 3: // Unfavorite a book
 				UI::printBooks(Engine::getFavoriteBooks(user));
