@@ -160,11 +160,11 @@ std::vector<Engine::Book> Engine::getFavoriteBooks(std::string_view username)
 		{
 			for (int j{}; j < userdata["users"][i]["favoriteBooks"].size(); ++j)
 			{
-				books.push_back(Book(userdata["users"][i]["favoriteBooks"][j]["author"],
-					userdata["users"][i]["favoriteBooks"][j]["language"],
-					userdata["users"][i]["favoriteBooks"][j]["title"],
-					userdata["users"][i]["favoriteBooks"][j]["link"],
-					userdata["users"][i]["favoriteBooks"][j]["year"]));
+				books.push_back({ userdata["users"][i]["favoriteBooks"][j]["author"].get<std::vector<std::string>>(),
+					userdata["users"][i]["favoriteBooks"][j]["language"].get<std::vector<std::string>>(),
+					userdata["users"][i]["favoriteBooks"][j]["title"].get<std::string>(),
+					userdata["users"][i]["favoriteBooks"][j]["link"].get<std::string>(),
+					userdata["users"][i]["favoriteBooks"][j]["year"].get<size_t>() });
 			}
 			return books;
 		}
@@ -246,11 +246,11 @@ std::vector<Engine::Book> Engine::getRecentBooks(std::string_view username)
 		{
 			for (int j{}; j < userdata["users"][i]["recentlyBooks"].size(); ++j)
 			{
-				books.push_back(Book(userdata["users"][i]["recentlyBooks"][j]["author"],
-					userdata["users"][i]["recentlyBooks"][j]["language"],
-					userdata["users"][i]["recentlyBooks"][j]["title"],
-					userdata["users"][i]["recentlyBooks"][j]["link"],
-					userdata["users"][i]["recentlyBooks"][j]["year"]));
+				books.push_back({ userdata["users"][i]["favoriteBooks"][j]["author"].get<std::vector<std::string>>(),
+					userdata["users"][i]["favoriteBooks"][j]["language"].get<std::vector<std::string>>(),
+					userdata["users"][i]["favoriteBooks"][j]["title"].get<std::string>(),
+					userdata["users"][i]["favoriteBooks"][j]["link"].get<std::string>(),
+					userdata["users"][i]["favoriteBooks"][j]["year"].get<size_t>() });
 			}
 			return books;
 		}
