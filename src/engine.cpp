@@ -12,7 +12,7 @@ long Engine::testConnection()
 
 Engine::ResponseCode Engine::recreateFile(std::string_view fileTemplate)
 {
-	std::fstream file{ filename, std::ios::out | std::ios::trunc };
+	std::fstream file{ FILENAME.data(), std::ios::out | std::ios::trunc};
 	if (!file.is_open())
 	{
 		return ResponseCode::FailedFileOpen;
@@ -29,7 +29,7 @@ Engine::ResponseCode Engine::recreateFile(std::string_view fileTemplate)
 
 Engine::ResponseCode Engine::fileToJSON(json& userdata)
 {
-	std::fstream file(filename);
+	std::fstream file{ FILENAME.data() };
 	if (!file.is_open())
 	{
 		return ResponseCode::FailedFileOpen;
@@ -41,7 +41,7 @@ Engine::ResponseCode Engine::fileToJSON(json& userdata)
 
 Engine::ResponseCode Engine::JSONToFile(const json& userdata)
 {
-	std::fstream file(filename, std::ios::out | std::ios::trunc);
+	std::fstream file{ FILENAME.data(), std::ios::out | std::ios::trunc };
 	if (!file.is_open())
 	{
 		return ResponseCode::FailedFileOpen;
@@ -118,7 +118,7 @@ Engine::ResponseCode Engine::chooseUser(std::string& username, const short choic
 	return ResponseCode::Ok;
 }
 
-Engine::ResponseCode Engine::deleteUser(std::string& username)
+Engine::ResponseCode Engine::deleteUser(const std::string& username)
 {
 	json userdata{};
 	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
@@ -135,11 +135,9 @@ Engine::ResponseCode Engine::deleteUser(std::string& username)
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
 			userdata["users"].erase(i);
-			username.clear();
 			return JSONToFile(userdata);
 		}
 	}
-	username.clear();
 	return ResponseCode::NoUser;
 }
 
@@ -190,7 +188,7 @@ Engine::ResponseCode Engine::addFavoriteBook(std::string_view username, const Bo
 	{
 		if (userdata["users"][i]["username"].get<std::string_view>() == username)
 		{
-			if (userdata["users"][i]["favoriteBooks"].size() == 5)
+			if (userdata["users"][i]["favoriteBooks"].size() == MAX_FAVORITE_BOOKS)
 			{
 				return ResponseCode::MaxCountOfFavoriteBooks;
 			}
@@ -229,7 +227,7 @@ Engine::ResponseCode Engine::deleteFavoriteBook(std::string_view username, const
 	return ResponseCode::NoUser;
 }
 
-std::vector<Engine::Book> Engine::getRecentlyBooks(std::string_view username)
+std::vector<Engine::Book> Engine::getRecentBooks(std::string_view username)
 {
 	std::vector<Book> books;
 	json userdata{};
@@ -260,7 +258,7 @@ std::vector<Engine::Book> Engine::getRecentlyBooks(std::string_view username)
 	return books;
 }
 
-Engine::ResponseCode Engine::addRecentlyBook(std::string_view username, const Book& book)
+Engine::ResponseCode Engine::addRecentBook(std::string_view username, const Book& book)
 {
 	json userdata{};
 	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
@@ -282,7 +280,7 @@ Engine::ResponseCode Engine::addRecentlyBook(std::string_view username, const Bo
 				{"title", book.title},
 				{"year", book.year},
 				{"link", book.link}});
-			while (userdata["users"][i]["recentlyBooks"].size() >= 6)
+			while (userdata["users"][i]["recentlyBooks"].size() > MAX_RECENT_BOOKS)
 			{
 				userdata["users"][i]["recentlyBooks"].erase(0);
 			}
@@ -292,7 +290,7 @@ Engine::ResponseCode Engine::addRecentlyBook(std::string_view username, const Bo
 	return ResponseCode::NoUser;
 }
 
-Engine::ResponseCode Engine::deleteRecentlyBook(std::string_view username, const short bookNumber)
+Engine::ResponseCode Engine::deleteRecentBook(std::string_view username, const short bookNumber)
 {
 	json userdata{};
 	if (ResponseCode transferRes{ fileToJSON(userdata) }; transferRes != ResponseCode::Ok)
@@ -570,47 +568,4 @@ Engine::ResponseCode Engine::saveSearchParams(std::string_view username, const S
 		}
 	}
 	return ResponseCode::NoUser;
-}
-
-int Engine::randBookNumber(unsigned int maxNum)
-{
-	static std::random_device rd;
-	static std::mt19937 rng{ rd() };
-	std::uniform_int_distribution<std::mt19937::result_type> uid{ 0,maxNum }; // Site search response contains 100 books
-	return (int)uid(rng);
-}
-
-Engine::ResponseCode Engine::isRandomBookEmpty(const Book& book)
-{
-	if (book.author.empty())
-	{
-		if (book.language.empty())
-		{
-			if (book.title.empty())
-			{
-				if (book.link.empty())
-				{
-					if (!book.year)
-					{
-						return ResponseCode::EmptyRandomBook;
-					}
-				}
-			}
-		}
-	}
-	return ResponseCode::Ok;
-}
-
-std::string Engine::transformStrToURL(std::string_view str)
-{
-	std::string url{ str };
-	std::replace(begin(url), end(url), ' ', '+');
-	return url;
-}
-
-std::string Engine::makeLinkFromResponse(const nlohmann::json& response, int bookNumber)
-{
-	std::string link{ "https://openlibrary.org" + response["docs"][bookNumber]["key"].get<std::string>() + "/" + response["docs"][bookNumber]["title"].get<std::string>() };
-	std::replace(begin(link), end(link), ' ', '_');
-	return link;
 }

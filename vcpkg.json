@@ -1,6 +1,6 @@
 {
   "name": "library-viewer",
-  "version-string": "0.9.3",
+  "version-string": "1.0.0",
   "builtin-baseline": "e861f04798ca54fa70ff906b5e43e5fc99b7f406",
   "dependencies": [
     "cpr",

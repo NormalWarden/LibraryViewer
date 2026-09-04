@@ -22,10 +22,10 @@ int main()
 		{
 		case 1: // Open list of my books
 			UI::printBooks(Engine::getFavoriteBooks(user));
-			break;
+			continue;
 		case 2: // Look recently looked books
-			UI::printBooks(Engine::getRecentlyBooks(user));
-			break;
+			UI::printBooks(Engine::getRecentBooks(user));
+			continue;
 		case 3: // Search
 			UI::systemMessage(Engine::getSearchParams(user, sParams));
 			UI::printSearchParams(sParams);
@@ -35,7 +35,7 @@ int main()
 			UI::printBooks(books);
 			if (books.empty())
 			{
-				break;
+				continue;
 			}
 			UI::printAfterSearchOptions();
 			for (short choice{ UI::getUserChoice() }; choice != 3; choice = UI::getUserChoice())
@@ -44,14 +44,14 @@ int main()
 				{
 				case 1:
 					UI::lookBookDescriptionFromSearch(user, books);
-					break;
+					continue;
 				case 2:
 					UI::favoriteBookFromSearch(user, books);
-					break;
+					continue;
 				}
 				UI::printAfterSearchOptions();
 			}
-			break;
+			continue;
 		case 4: // Search randomly
 			UI::printRandomSearchParams(sParams);
 			books.clear();
@@ -60,31 +60,31 @@ int main()
 			{
 				UI::printBooks(books);
 				UI::printBookDescription(Engine::getBookDescription(books[0].link));
-				UI::systemMessage(Engine::addRecentlyBook(user, books[0]));
+				UI::systemMessage(Engine::addRecentBook(user, books[0]));
 				UI::favoriteRandomBook(user, books[0]);
 			}
 			UI::systemMessage(Engine::isRandomBookEmpty(books[0]));
-			break;
+			continue;
 		case 5: // Choose user
 			UI::printChosenUser(user);
 			UI::printUsers(Engine::getUsers());
 			UI::systemMessage(Engine::chooseUser(user, UI::getUserChoice() - 1));
-			break;
+			continue;
 		case 6: // Create user
 			if (Engine::ResponseCode transferRes{ Engine::createUser(UI::getNewUsername()) }; transferRes != Engine::ResponseCode::Ok)
 			{
 				UI::systemMessage(transferRes);
-				break;
+				continue;
 			}
 			UI::systemMessage(Engine::chooseUser(user, Engine::getUsers().size() - 1));
-			break;
+			continue;
 		case 7: // Special options
 			UI::printSpecialOptions();
 			switch (UI::getUserChoice())
 			{
 			case 1: // Recreate the file with user data
 				UI::systemMessage(Engine::recreateFile());
-				break;
+				continue;
 			case 2: // Delete the user
 				UI::printChosenUser(user);
 				UI::printUsers(Engine::getUsers());
@@ -94,18 +94,18 @@ int main()
 				{
 					UI::systemMessage(Engine::chooseUser(user, 1)); // Choosing guest if chosen user has been deleted
 				}
-				break;
+				continue;
 			case 3: // Unfavorite a book
 				UI::printBooks(Engine::getFavoriteBooks(user));
 				UI::systemMessage(Engine::deleteFavoriteBook(user, UI::getUserChoice() - 1));
-				break;
+				continue;
 			case 4: // Test connection to the site
 				UI::printTestConnectionRes(Engine::testConnection());
-				break;
+				continue;
 			case 5: // Nothing
-				break;
+				continue;
 			}
-			break;
+			continue;
 		case 8: // Exit
 			return 0;
 		}

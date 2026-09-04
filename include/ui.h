@@ -38,7 +38,9 @@ namespace UI
 	void favoriteRandomBook(std::string_view username, const Engine::Book& book);
 
 	// Functions-helpers
-	std::string authorsVecToStr(const std::vector<std::string>& authorsV);
-	std::string languagesVecToStr(const std::vector<std::string>& langsV);
-	std::string sortModeToStr(const Engine::Sort& sort);
+	inline std::string authorsVecToStr(const std::vector<std::string>& authorsV); // { "Mark Twain", "Charles Neider" } -> "Mark Twain, Charles Neider"
+	inline std::string languagesVecToStr(const std::vector<std::string>& langsV); // { "english", "spanish" } -> "english, spanish"
+	inline std::string sortModeToStr(const Engine::Sort& sort); // Engine::Sort::Mode -> "mode"
 }
+
+#include "ui.inl"

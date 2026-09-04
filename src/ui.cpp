@@ -443,8 +443,14 @@ void UI::lookBookDescriptionFromSearch(std::string_view username, const std::vec
 		std::cout << "Invalid input. Defaulting nothing\n";
 		return;
 	}
-	UI::printBookDescription(Engine::getBookDescription(books.at(bookNumber - 1).link));
-	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber - 1)));
+	--bookNumber;
+	if (bookNumber < 0 || bookNumber >= books.size())
+	{
+		std::cout << "Invalid input. Defaulting nothing\n";
+		return;
+	}
+	UI::printBookDescription(Engine::getBookDescription(books[bookNumber].link));
+	UI::systemMessage(Engine::addRecentBook(username, books[bookNumber]));
 }
 
 void UI::favoriteBookFromSearch(std::string_view username, const std::vector<Engine::Book>& books)
@@ -459,8 +465,14 @@ void UI::favoriteBookFromSearch(std::string_view username, const std::vector<Eng
 		std::cout << "Invalid input. Defaulting nothing\n";
 		return;
 	}
-	UI::systemMessage(Engine::addFavoriteBook(username, books.at(bookNumber - 1)));
-	UI::systemMessage(Engine::addRecentlyBook(username, books.at(bookNumber - 1)));
+	--bookNumber;
+	if (bookNumber < 0 || bookNumber >= books.size())
+	{
+		std::cout << "Invalid input. Defaulting nothing\n";
+		return;
+	}
+	UI::systemMessage(Engine::addFavoriteBook(username, books[bookNumber]));
+	UI::systemMessage(Engine::addRecentBook(username, books[bookNumber]));
 }
 
 void UI::favoriteRandomBook(std::string_view username, const Engine::Book& book)
@@ -480,51 +492,4 @@ void UI::favoriteRandomBook(std::string_view username, const Engine::Book& book)
 		return;
 	}
 	UI::systemMessage(Engine::addFavoriteBook(username, book));
-}
-
-std::string UI::authorsVecToStr(const std::vector<std::string>& authorsV)
-{
-	std::string authorsS{ authorsV[0] };
-	if (authorsV.size() == 1)
-	{
-		return authorsS;
-	}
-	for (int author{ 1 }; author < authorsV.size(); ++author)
-	{
-		authorsS += ", " + authorsV[author];
-	}
-	return authorsS;
-}
-
-std::string UI::languagesVecToStr(const std::vector<std::string>& langsV)
-{
-	std::string langsS{ langsV[0] };
-	if (langsV.size() == 1)
-	{
-		return langsS;
-	}
-	for (int author{ 1 }; author < langsV.size(); ++author)
-	{
-		langsS += ", " + langsV[author];
-	}
-	return langsS;
-}
-
-std::string UI::sortModeToStr(const Engine::Sort& sort)
-{
-	switch (sort)
-	{
-	case Engine::Sort::None:
-		return "relevant";
-	case Engine::Sort::Editions:
-		return "count of editions";
-	case Engine::Sort::Old:
-		return "old";
-	case Engine::Sort::New:
-		return "new";
-	case Engine::Sort::Rating:
-		return "rating";
-	default:
-		return "relevant";
-	}
 }
