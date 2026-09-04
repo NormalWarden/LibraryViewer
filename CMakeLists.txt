@@ -1,5 +1,15 @@
 ﻿cmake_minimum_required (VERSION 3.25)
 
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+	find_program(VCPKG_EXECUTABLE vcpkg)
+	if(VCPKG_EXECUTABLE)
+		get_filename_component(VCPKG_DIR "${VCPKG_EXECUTABLE}" DIRECTORY)
+		set(CMAKE_TOOLCHAIN_FILE "${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake")
+	else()
+		set(CMAKE_TOOLCHAIN_FILE "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\vcpkg\scripts\buildsystems\vcpkg.cmake")
+	endif()
+endif()
+
 project(LibraryViewer LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)

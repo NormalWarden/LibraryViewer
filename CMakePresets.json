@@ -12,8 +12,7 @@
             "displayName": "x64 Debug",
             "inherits": "base",
           "cacheVariables": {
-            "CMAKE_BUILD_TYPE": "Debug",
-            "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            "CMAKE_BUILD_TYPE": "Debug"
           }
         },
         {
@@ -24,5 +23,17 @@
                 "CMAKE_BUILD_TYPE": "Release"
             }
         }
+    ],
+    "buildPresets": [
+      {
+            "name": "x64-debug",
+            "configurePreset": "x64-debug",
+	    "configuration": "Debug"
+      },
+      {
+            "name": "x64-release",
+            "configurePreset": "x64-release",
+	    "configuration": "Release"
+      }
     ]
 }
