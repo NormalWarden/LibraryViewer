@@ -1,10 +1,6 @@
-﻿#include <cpr/cpr.h>
-#include <nlohmann/json.hpp>
-
-#include "engine.h"
+﻿#include "engine.h"
 #include "ui.h"
 
-using json = nlohmann::json;
 
 int main()
 {
