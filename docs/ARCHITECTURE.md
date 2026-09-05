@@ -1,0 +1,7 @@
+## Architecture
+
+* **Engine Namespace:** Contains the core business logic, including a `ResponseCode` enum for user feedback, a `Sort` enum for search modes, a `SearchParams` struct to group query parameters, and a lightweight `Book` struct. To maintain header cleanliness and readability, small helper functions are encapsulated into an inline implementation file (`engine.inl`).
+* **UI Namespace:** Encapsulates all terminal input/output operations, handling user interactions and console validation. Small helper functions are encapsulated into an inline implementation file (`ui.inl`) too.
+* **Data Storage (JSON):** JSON was chosen for storing user data due to its simplicity and popularity. The `nlohmann/json` library is utilized because of its intuitive, Python-like syntax.
+* **Networking (CPR):** The `cpr` library was chosen as a clean and high-level wrapper for REST API requests. Since the application does not require extreme real-time networking performance, codebase readability and simplicity were prioritized over low-level sockets.
+* **Target Service:** The core functionality relies on integrating with the [Open Library API](https://openlibrary.org/) to search, fetch, and parse book records dynamically.
